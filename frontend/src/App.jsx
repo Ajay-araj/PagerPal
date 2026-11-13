@@ -12,6 +12,7 @@ import { Settings } from './components/Settings';
 import { ChaosModal } from './components/ChaosModal';
 import { ParticleBackground } from './components/ParticleBackground';
 import { LoadingScreen } from './components/LoadingScreen';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { api } from './api';
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
     }
   });
 
+  const [backendError, setBackendError] = useState(false);
   const [currentPage, setCurrentPage] = useState('overview');
   const [dashboard, setDashboard] = useState(null);
   const [activeSim, setActiveSim] = useState(null);
@@ -69,7 +71,14 @@ export default function App() {
         api.getScenarios().catch(() => [])
       ]);
 
-      if (dash) setDashboard(dash);
+      if (dash) {
+        setDashboard(dash);
+        setBackendError(false);
+      } else if (!dashboard) {
+        const health = await api.getHealth().catch(() => null);
+        if (!health) setBackendError(true);
+        else setBackendError(false);
+      }
       if (scens && scens.length) setScenarios(scens);
       if (sim) {
         setActiveSim(sim);
@@ -209,6 +218,31 @@ export default function App() {
           isSimBusy={isSimBusy}
           onOpenChaos={() => setIsChaosOpen(true)}
         />
+
+        {/* Backend Connection Warning & Recovery Banner */}
+        {backendError && (
+          <div style={{
+            background: 'rgba(255, 170, 54, 0.12)',
+            borderBottom: '1px solid var(--amber)',
+            padding: '10px 24px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontSize: '13px',
+            color: '#ffeaad',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={15} style={{ color: 'var(--amber)', flexShrink: 0 }} />
+              <span>
+                <b>Backend Connecting:</b> Unable to reach API endpoint ({import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}). Cloud instances (Render) may take ~30s on cold start.
+              </span>
+            </div>
+            <button className="btn" onClick={() => refreshData()} style={{ padding: '4px 12px', fontSize: '12px', flexShrink: 0 }}>
+              <RefreshCw size={12} /> Retry Now
+            </button>
+          </div>
+        )}
 
         <main id="main">
           {currentPage === 'overview' && (

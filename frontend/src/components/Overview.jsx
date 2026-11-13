@@ -1,6 +1,7 @@
 import React from 'react';
 import { Zap, AlertTriangle, ShieldCheck, CheckCircle2, AlertCircle, Activity, ArrowUpRight } from 'lucide-react';
 import { Topology3D } from './Topology3D';
+import { PagerPalLogoIcon } from './PagerPalLogo';
 
 const SEVB = {
   Critical: ['red', ''],
@@ -48,7 +49,10 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, ac
       {/* Header */}
       <div className="hd">
         <div>
-          <h1>Operations Command Centre</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+            <PagerPalLogoIcon size={28} />
+            <h1>Operations Command Centre</h1>
+          </div>
           <p>
             {isSimBusy
               ? 'Multi-agent orchestration in progress. Active incident under autonomous investigation.'
@@ -69,24 +73,40 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, ac
       </div>
 
       {/* Top HUD Metrics Strip */}
-      <div className="strip">
-        <div>
-          <b>{d.active_incidents}</b>
-          <span>Active incidents</span>
-        </div>
-        <div>
-          <b style={{ color: d.critical_alerts > 0 ? 'var(--red)' : '#FFFFFF' }}>{d.critical_alerts}</b>
-          <span>Critical alerts</span>
-        </div>
-        <div>
-          <b>{d.services_affected}</b>
-          <span>Services affected</span>
-        </div>
-        <div>
-          <b style={{ color: 'var(--cyan)' }}>{d.mttr}</b>
-          <span>MTTR · measured</span>
-        </div>
-      </div>
+      {(() => {
+        const rawMttr = d.mttr || '2m 15s';
+        let mttrValue = d.mttr_value || rawMttr;
+        let mttrType = d.mttr_type || 'simulated estimate';
+
+        if (!d.mttr_value && rawMttr.includes('(')) {
+          const parts = rawMttr.split('(');
+          mttrValue = parts[0].trim();
+          mttrType = parts[1].replace(')', '').trim();
+        }
+
+        return (
+          <div className="strip">
+            <div>
+              <b>{d.active_incidents}</b>
+              <span>Active incidents</span>
+            </div>
+            <div>
+              <b style={{ color: d.critical_alerts > 0 ? 'var(--red)' : '#FFFFFF' }}>{d.critical_alerts}</b>
+              <span>Critical alerts</span>
+            </div>
+            <div>
+              <b>{d.services_affected}</b>
+              <span>Services affected</span>
+            </div>
+            <div>
+              <b style={{ color: 'var(--cyan)' }}>{mttrValue}</b>
+              <span title={`MTTR · ${mttrType}`}>
+                MTTR · <span style={{ color: mttrType === 'measured' ? 'var(--green)' : 'var(--amber)', textTransform: 'lowercase' }}>{mttrType}</span>
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Central 3D Service Topology Centerpiece */}
       <div className="pn" style={{ padding: '16px', marginBottom: '24px', background: 'var(--card)' }}>

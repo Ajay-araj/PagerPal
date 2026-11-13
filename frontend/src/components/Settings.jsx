@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Bell, BarChart3, Play, CheckCircle2, ShieldAlert, Cpu } from 'lucide-react';
+import { ShieldCheck, Bell, BarChart3, Play, CheckCircle2, ShieldAlert, Cpu, Sparkles } from 'lucide-react';
 import { api } from '../api';
+import { PagerPalLogoFull, PagerPalLogoIcon } from './PagerPalLogo';
 
 export function Settings({ onToast }) {
   const [webhookUrl, setWebhookUrl] = useState('https://hooks.slack.com/services/simulated/pagerpal/incidents');
@@ -33,6 +34,18 @@ export function Settings({ onToast }) {
             Safety boundary enforcement, autonomous policy parameters, notification dispatch, and Section 10 target verification.
           </p>
         </div>
+      </div>
+
+      {/* Official PagerPal Branding & Multi-Agent Architecture */}
+      <div className="pn" style={{ textAlign: 'center', padding: '28px' }}>
+        <h2 style={{ justifyContent: 'center', marginBottom: '8px' }}>
+          <Sparkles size={18} style={{ color: 'var(--cyan)' }} />
+          Official PagerPal Autonomous Agent Architecture
+        </h2>
+        <p className="sub" style={{ maxWidth: '640px', margin: '0 auto 20px' }}>
+          Collaborative multi-agent reasoning topology: Detect, Investigate, Verify, Approve, and Resolve.
+        </p>
+        <PagerPalLogoFull maxWidth="720px" />
       </div>
 
       <div className="pn">

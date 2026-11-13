@@ -155,3 +155,4 @@ Once your Vercel deployment URL is generated (e.g., `https://pagerpal-xyz.vercel
 - [x] SPA routing configured via `frontend/vercel.json`.
 - [x] Render Infrastructure-as-Code configured via `render.yaml`.
 - [x] Sandboxed simulation guarantee: all operations strictly isolated from production infrastructure.
+

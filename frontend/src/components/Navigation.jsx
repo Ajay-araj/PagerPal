@@ -9,6 +9,7 @@ import {
   Settings,
   ShieldAlert
 } from 'lucide-react';
+import { PagerPalLogoIcon } from './PagerPalLogo';
 
 const PAGES = [
   { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
@@ -24,7 +25,7 @@ export function Navigation({ currentPage, onNavigate, isSimBusy }) {
   return (
     <nav aria-label="Main Navigation">
       <div className="logo">
-        <i>P</i>
+        <PagerPalLogoIcon size={34} />
         <div>
           <span>PagerPal</span>
           <span className="logo-sub">AI SRE Console</span>

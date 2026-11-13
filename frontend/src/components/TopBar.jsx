@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, AlertCircle, Zap, Clock } from 'lucide-react';
+import { PagerPalLogoIcon } from './PagerPalLogo';
 
 export function TopBar({ isSimBusy, onOpenChaos }) {
   const [time, setTime] = useState('');
@@ -17,6 +18,7 @@ export function TopBar({ isSimBusy, onOpenChaos }) {
   return (
     <div className="top" id="top">
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <PagerPalLogoIcon size={24} />
         <b style={{ fontFamily: "'Sora', sans-serif", fontSize: '15px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>
           PagerPal
         </b>

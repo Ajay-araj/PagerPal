@@ -92,7 +92,7 @@ def get_dashboard():
     if is_busy and services_affected == 0:
         services_affected = 1
 
-    # 4. Real MTTR computed from resolved incidents in SQLite (labelled as simulated estimate)
+    # 4. Real MTTR computed from resolved incidents in SQLite (accurately distinguishes measured vs simulated estimate)
     c.execute("SELECT detected_at, resolved_at FROM incidents WHERE status = 'Resolved' AND resolved_at IS NOT NULL")
     resolved_rows = c.fetchall()
     durations = []
@@ -113,9 +113,13 @@ def get_dashboard():
         avg_sec = sum(durations) / len(durations)
         m = int(avg_sec // 60)
         s = int(avg_sec % 60)
-        mttr_display = f"{m}m {s}s (simulated estimate)"
+        mttr_value = f"{m}m {s}s"
+        mttr_type = "measured"
     else:
-        mttr_display = "2m 15s (simulated estimate)"
+        mttr_value = "2m 15s"
+        mttr_type = "simulated estimate"
+
+    mttr_display = f"{mttr_value} ({mttr_type})"
 
     # Service health
     active_svc = sim_status["sim"]["scenario"]["svc"] if is_busy else None
@@ -188,6 +192,8 @@ def get_dashboard():
         "critical_alerts": critical_alerts,
         "services_affected": services_affected,
         "mttr": mttr_display,
+        "mttr_value": mttr_value,
+        "mttr_type": mttr_type,
         "service_health": list(service_health.values()),
         "recent_incidents": recent_incidents,
         "recent_logs": recent_logs,
