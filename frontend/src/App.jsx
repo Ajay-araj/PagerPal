@@ -11,9 +11,11 @@ import { Postmortems } from './components/Postmortems';
 import { Settings } from './components/Settings';
 import { ChaosModal } from './components/ChaosModal';
 import { ParticleBackground } from './components/ParticleBackground';
+import { LoadingScreen } from './components/LoadingScreen';
 import { api } from './api';
 
 export default function App() {
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('overview');
   const [dashboard, setDashboard] = useState(null);
   const [activeSim, setActiveSim] = useState(null);
@@ -162,6 +164,11 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* Permanent Visual Loading Screen */}
+      {isLoading && (
+        <LoadingScreen onComplete={() => setIsLoading(false)} />
+      )}
+
       {/* Ambient Particle Background */}
       <ParticleBackground />
 
