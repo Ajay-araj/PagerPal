@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Navigation } from './components/Navigation';
 import { TopBar } from './components/TopBar';
 import { Overview } from './components/Overview';
@@ -15,7 +15,17 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { api } from './api';
 
 export default function App() {
-  const [isLoading, setIsLoading] = useState(true);
+  // Logical loading lifecycle: 'loading' -> 'dashboard-ready'
+  const [loadingPhase, setLoadingPhase] = useState(() => {
+    try {
+      return window.sessionStorage.getItem('pagerpal_dashboard_ready') === 'true'
+        ? 'dashboard-ready'
+        : 'loading';
+    } catch {
+      return 'loading';
+    }
+  });
+
   const [currentPage, setCurrentPage] = useState('overview');
   const [dashboard, setDashboard] = useState(null);
   const [activeSim, setActiveSim] = useState(null);
@@ -29,12 +39,19 @@ export default function App() {
 
   const prevSimPhaseRef = useRef(null);
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage((cur) => (cur === msg ? null : cur));
     }, 3600);
-  };
+  }, []);
+
+  const handleLoadingComplete = useCallback(() => {
+    try {
+      window.sessionStorage.setItem('pagerpal_dashboard_ready', 'true');
+    } catch {}
+    setLoadingPhase('dashboard-ready');
+  }, []);
 
   const isSimBusy =
     activeSim &&
@@ -42,7 +59,7 @@ export default function App() {
     ['running', 'await', 'executing', 'verifying'].includes(activeSim.sim.phase);
 
   // Poll dashboard & active simulation
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     try {
       const [dash, sim, incs, kb, scens] = await Promise.all([
         api.getDashboard().catch(() => null),
@@ -92,13 +109,13 @@ export default function App() {
     } catch (e) {
       console.warn('Refresh error:', e);
     }
-  };
+  }, [currentPage, isSimBusy, selectedIncidentDetail, showToast]);
 
   useEffect(() => {
     refreshData();
     const interval = setInterval(refreshData, isSimBusy ? 1400 : 4000);
     return () => clearInterval(interval);
-  }, [isSimBusy, currentPage]);
+  }, [refreshData, isSimBusy]);
 
   const handleOpenIncident = async (id, isLive) => {
     if (isLive) {
@@ -164,9 +181,9 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Permanent Visual Loading Screen */}
-      {isLoading && (
-        <LoadingScreen onComplete={() => setIsLoading(false)} />
+      {/* Exactly Two-Cycle Loading Screen */}
+      {loadingPhase !== 'dashboard-ready' && (
+        <LoadingScreen onComplete={handleLoadingComplete} />
       )}
 
       {/* Ambient Particle Background */}

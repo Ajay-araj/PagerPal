@@ -1,22 +1,29 @@
 const BASE_URL = '';
 
-async function request(url, options = {}) {
+async function request(url, options = {}, timeoutMs = 6000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const res = await fetch(`${BASE_URL}${url}`, {
+      signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
       },
       ...options
     });
+    clearTimeout(timeoutId);
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(err.detail || 'Network request failed');
     }
     return await res.json();
   } catch (e) {
-    console.warn(`API call failed for ${url}:`, e.message);
-    throw e;
+    clearTimeout(timeoutId);
+    const msg = e.name === 'AbortError' ? `Request timeout after ${timeoutMs}ms` : e.message;
+    console.warn(`API call failed for ${url}:`, msg);
+    throw new Error(msg);
   }
 }
 
@@ -61,4 +68,3 @@ export const api = {
   }),
   runEvaluationSuite: () => request('/api/evaluate', { method: 'POST' })
 };
-

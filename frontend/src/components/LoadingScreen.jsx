@@ -1,52 +1,98 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
-const INITIALIZATION_STEPS = [
-  { threshold: 0, text: 'INITIALIZING PAGERPAL' },
-  { threshold: 18, text: 'LOADING AI AGENTS' },
-  { threshold: 38, text: 'CONNECTING SIMULATION ENGINE' },
-  { threshold: 58, text: 'INITIALIZING SERVICE TOPOLOGY' },
-  { threshold: 78, text: 'VERIFYING SYSTEM STATUS' },
-  { threshold: 92, text: 'PREPARING DASHBOARD' },
-  { threshold: 100, text: 'SYSTEM READY' }
+const CYCLE_1_STEPS = [
+  { threshold: 0, text: 'INITIALIZING PAGERPAL CORE' },
+  { threshold: 22, text: 'LOADING AI AGENTS & DISPATCHER' },
+  { threshold: 46, text: 'CONNECTING SIMULATION ENGINE' },
+  { threshold: 72, text: 'INITIALIZING SERVICE TOPOLOGY MESH' },
+  { threshold: 92, text: 'CYCLE 1 VERIFIED · COMPLETED' },
+  { threshold: 100, text: 'CYCLE 1 COMPLETE' }
+];
+
+const CYCLE_2_STEPS = [
+  { threshold: 0, text: 'PREPARING SRE COMMAND CONSOLE' },
+  { threshold: 24, text: 'LOADING TELEMETRY & ALERT CORRELATOR' },
+  { threshold: 48, text: 'SYNCHRONIZING NETWORKX CAUSAL GRAPH' },
+  { threshold: 74, text: 'VERIFYING INDEPENDENT POLICY ENGINE' },
+  { threshold: 92, text: 'PREPARING DASHBOARD INTERFACE' },
+  { threshold: 100, text: 'SYSTEM READY · ENTERING DASHBOARD' }
 ];
 
 export function LoadingScreen({ onComplete }) {
+  const [cycle, setCycle] = useState(1); // 1 or 2
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState('INITIALIZING PAGERPAL');
+  const [statusText, setStatusText] = useState('INITIALIZING PAGERPAL CORE');
   const [isFadingOut, setIsFadingOut] = useState(false);
+  
   const canvasContainerRef = useRef(null);
+  const onCompleteRef = useRef(onComplete);
 
-  // 1. Progress Animation Simulation synced with real initialization
+  // Keep latest onComplete callback in ref without re-triggering effects
   useEffect(() => {
-    let current = 0;
-    const interval = setInterval(() => {
-      // Smooth non-linear progress
-      const increment = current < 30 ? 2.5 : current < 70 ? 1.8 : current < 90 ? 1.2 : 2.0;
-      current = Math.min(100, current + increment);
-      setProgress(Math.floor(current));
-
-      // Update status message
-      const matchedStep = [...INITIALIZATION_STEPS]
-        .reverse()
-        .find((s) => current >= s.threshold);
-      if (matchedStep) {
-        setStatusText(matchedStep.text);
-      }
-
-      if (current >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsFadingOut(true);
-          setTimeout(() => {
-            if (onComplete) onComplete();
-          }, 700);
-        }, 400);
-      }
-    }, 45);
-
-    return () => clearInterval(interval);
+    onCompleteRef.current = onComplete;
   }, [onComplete]);
+
+  // 1. Two-Cycle Progress State Machine
+  useEffect(() => {
+    let currentCycle = 1;
+    let currentProgress = 0;
+    let timerId = null;
+    let isTerminated = false;
+
+    const runStep = () => {
+      if (isTerminated) return;
+
+      // Increment progress smoothly
+      const speed = currentProgress < 30 ? 2.8 : currentProgress < 75 ? 2.0 : currentProgress < 92 ? 1.4 : 2.5;
+      currentProgress = Math.min(100, currentProgress + speed);
+      setProgress(Math.floor(currentProgress));
+
+      // Update status text based on current cycle and threshold
+      const stepsList = currentCycle === 1 ? CYCLE_1_STEPS : CYCLE_2_STEPS;
+      const matched = [...stepsList].reverse().find(s => currentProgress >= s.threshold);
+      if (matched) {
+        setStatusText(matched.text);
+      }
+
+      if (currentProgress < 100) {
+        timerId = setTimeout(runStep, 38);
+      } else {
+        // Reached 100% on current cycle
+        if (currentCycle === 1) {
+          // Pause briefly at 100% of Cycle 1, then restart Cycle 2 from 0%
+          timerId = setTimeout(() => {
+            if (isTerminated) return;
+            currentCycle = 2;
+            currentProgress = 0;
+            setCycle(2);
+            setProgress(0);
+            setStatusText('PREPARING SRE COMMAND CONSOLE');
+            timerId = setTimeout(runStep, 100);
+          }, 350);
+        } else {
+          // Cycle 2 reached 100%! Transition to actual dashboard
+          timerId = setTimeout(() => {
+            if (isTerminated) return;
+            setIsFadingOut(true);
+            timerId = setTimeout(() => {
+              if (onCompleteRef.current) {
+                onCompleteRef.current();
+              }
+            }, 650);
+          }, 350);
+        }
+      }
+    };
+
+    // Kick off animation cycle
+    timerId = setTimeout(runStep, 80);
+
+    return () => {
+      isTerminated = true;
+      if (timerId) clearTimeout(timerId);
+    };
+  }, []); // Empty dependency array ensures timer is NEVER cancelled by parent re-renders
 
   // 2. Three.js Floating 3D Geometric Objects Overlay
   useEffect(() => {
@@ -281,13 +327,14 @@ export function LoadingScreen({ onComplete }) {
         padding: '48px 24px 60px',
         overflow: 'hidden',
         opacity: isFadingOut ? 0 : 1,
-        transition: 'opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
+        transition: 'opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1)',
         pointerEvents: isFadingOut ? 'none' : 'auto'
       }}
       role="progressbar"
       aria-valuenow={progress}
       aria-valuemin={0}
       aria-valuemax={100}
+      aria-label={`PagerPal Initialization Cycle ${cycle} of 2`}
     >
       {/* Three.js 3D Floating Geometry Overlay Canvas */}
       <div
@@ -342,7 +389,7 @@ export function LoadingScreen({ onComplete }) {
         </div>
       </div>
 
-      {/* Center Spacer: Let the Black Sphere with Golden Ring remain the hero visual */}
+      {/* Center Spacer: Preserves the Black Sphere with Golden Ring as the hero visual */}
       <div style={{ flex: 1 }} />
 
       {/* Bottom Section: Large Animated Percentage, Progress Bar & System Messages */}
@@ -358,6 +405,29 @@ export function LoadingScreen({ onComplete }) {
           animation: 'fadeInUp 0.8s ease-out'
         }}
       >
+        {/* Cycle Indicator Badge */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '3px 10px',
+            borderRadius: '99px',
+            background: 'rgba(0, 0, 0, 0.65)',
+            border: `1px solid ${cycle === 1 ? 'rgba(0, 217, 255, 0.4)' : 'rgba(255, 215, 0, 0.4)'}`,
+            marginBottom: '12px',
+            fontSize: '11px',
+            fontFamily: "'JetBrains Mono', monospace",
+            letterSpacing: '0.08em',
+            color: cycle === 1 ? 'var(--cyan)' : '#ffd700',
+            backdropFilter: 'blur(8px)'
+          }}
+        >
+          <span>CYCLE {cycle} OF 2</span>
+          <span>·</span>
+          <span>{cycle === 1 ? 'SYSTEM INITIALIZATION' : 'DASHBOARD SYNCHRONIZATION'}</span>
+        </div>
+
         {/* Large Animated Percentage */}
         <div
           style={{
@@ -378,7 +448,7 @@ export function LoadingScreen({ onComplete }) {
         <div
           style={{
             width: '100%',
-            height: '2px',
+            height: '2.5px',
             background: 'rgba(255, 255, 255, 0.12)',
             borderRadius: '99px',
             overflow: 'hidden',
@@ -390,9 +460,13 @@ export function LoadingScreen({ onComplete }) {
             style={{
               height: '100%',
               width: `${progress}%`,
-              background: 'linear-gradient(90deg, #00d9ff 0%, #ffd700 50%, #ffffff 100%)',
-              boxShadow: '0 0 12px rgba(255, 215, 0, 0.8), 0 0 20px rgba(0, 217, 255, 0.6)',
-              transition: 'width 0.1s linear'
+              background: cycle === 1 
+                ? 'linear-gradient(90deg, #00d9ff 0%, #328bff 50%, #ffffff 100%)' 
+                : 'linear-gradient(90deg, #ffd700 0%, #ff762e 50%, #ffffff 100%)',
+              boxShadow: cycle === 1
+                ? '0 0 14px rgba(0, 217, 255, 0.8)'
+                : '0 0 14px rgba(255, 215, 0, 0.8)',
+              transition: 'width 0.08s linear'
             }}
           />
         </div>
@@ -406,7 +480,7 @@ export function LoadingScreen({ onComplete }) {
             width: '100%',
             fontSize: '11px',
             fontFamily: "'JetBrains Mono', monospace",
-            letterSpacing: '0.12em',
+            letterSpacing: '0.1em',
             color: 'rgba(234, 243, 255, 0.75)'
           }}
         >
@@ -416,8 +490,8 @@ export function LoadingScreen({ onComplete }) {
                 width: '6px',
                 height: '6px',
                 borderRadius: '50%',
-                background: progress >= 100 ? '#00e6a0' : '#ffd700',
-                boxShadow: `0 0 8px ${progress >= 100 ? '#00e6a0' : '#ffd700'}`
+                background: progress >= 100 ? '#00e6a0' : cycle === 1 ? '#00d9ff' : '#ffd700',
+                boxShadow: `0 0 8px ${progress >= 100 ? '#00e6a0' : cycle === 1 ? '#00d9ff' : '#ffd700'}`
               }}
             />
             {statusText}
