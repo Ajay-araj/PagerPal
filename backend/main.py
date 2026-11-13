@@ -15,6 +15,8 @@ from backend.graph import topology
 from backend.orchestrator import orchestrator, AGENTS
 from backend.policy.engine import PolicyEngine
 from backend.recovery.verify import RecoveryVerifier
+from backend.memory.kb import kb
+from backend.postmortem.generator import PostmortemGenerator
 
 from contextlib import asynccontextmanager
 
@@ -403,6 +405,38 @@ def list_knowledge(q: Optional[str] = None):
         term = q_val.lower()
         rows = [r for r in rows if term in r["title"].lower() or term in r["symptoms"].lower() or term in r["root_cause"].lower() or term in r["service"].lower()]
     return rows
+
+@app.get("/api/kb/similar")
+def get_similar_incidents(
+    service: Optional[str] = Query(None, description="Target service ID"),
+    fault_type: Optional[str] = Query(None, description="Fault category"),
+    symptoms: Optional[str] = Query(None, description="Symptom keywords"),
+    limit: int = Query(5, ge=1, le=20)
+):
+    """
+    Returns past incident remediation records as suggestions for operator review.
+    Hard Rule 8: NEVER auto-apply past fixes. All results have suggestion_only=True.
+    """
+    s_val = service if isinstance(service, str) else None
+    f_val = fault_type if isinstance(fault_type, str) else None
+    sym_val = symptoms if isinstance(symptoms, str) else None
+    lim_val = limit if isinstance(limit, int) else 5
+
+    suggestions = kb.search_similar(service=s_val, fault_type=f_val, symptoms=sym_val, limit=lim_val)
+    return {
+        "query": {
+            "service": s_val,
+            "fault_type": f_val,
+            "symptoms": sym_val
+        },
+        "count": len(suggestions),
+        "suggestions": suggestions,
+        "governance": {
+            "hard_rule_8_enforced": True,
+            "auto_apply_allowed": False,
+            "notice": "Past incident fixes are strictly informational suggestions for human review. Never auto-applied."
+        }
+    }
 
 @app.get("/api/settings")
 def get_settings():

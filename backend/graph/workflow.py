@@ -33,6 +33,8 @@ from backend.executor.remediation import remediation_executor
 from backend.recovery.verify import RecoveryVerifier
 from backend.integrations.github_client import github_client
 from backend.integrations.notifier import notifier
+from backend.postmortem.generator import PostmortemGenerator
+from backend.memory.kb import kb
 
 
 class IncidentState(TypedDict, total=False):
@@ -658,39 +660,60 @@ def postmortem_node(state: IncidentState) -> Dict[str, Any]:
     """Generates structured postmortem report from actual measured telemetry."""
     inc_id = state["incident_id"]
     svc = state.get("target_service", "system")
+    fault_type = state.get("fault_type", "faulty_deployment")
     status = state.get("status", "Resolved")
-    rca = state.get("top_root_cause", "unknown")
+    severity = state.get("severity", "High")
+    rca = state.get("top_root_cause", svc)
+    prop_path = state.get("propagation_path", [rca, svc])
     prop = state.get("remediation_proposal", {})
+    action = prop.get("action", "remediation")
     before_m = state.get("before_metrics", {})
     after_m = state.get("after_metrics", {})
     verified = state.get("verified_claims", [])
     dropped = state.get("dropped_claims", [])
+    checks = state.get("policy_evaluation", {}).get("checks", [])
+    is_rec_verified = bool(state.get("is_recovery_verified", False))
+    operator_approved = bool(state.get("human_approved", False))
+    operator_reviewer = state.get("approval_reviewer", "Operator (Human)")
+    t0 = state.get("t0", time.time())
+    duration_sec = max(5.0, time.time() - t0)
 
-    pm_md = f"""# Incident Postmortem: {inc_id} (SIMULATION)
+    pm_md = PostmortemGenerator.generate(
+        incident_id=inc_id,
+        service=svc,
+        fault_type=fault_type,
+        status=status,
+        severity=severity,
+        root_cause=rca,
+        propagation_path=prop_path,
+        remediation_action=action,
+        before_metrics=before_m,
+        after_metrics=after_m,
+        verified_claims=verified,
+        dropped_claims=dropped,
+        policy_checks=checks,
+        is_recovery_verified=is_rec_verified,
+        operator_reviewer=operator_reviewer,
+        operator_approved=operator_approved,
+        orders_at_risk=state.get("orders_at_risk", 0),
+        checkout_success_pct=state.get("checkout_success_pct", 100.0),
+        duration_sec=duration_sec
+    )
 
-**Service:** `{svc}`  
-**Status:** {status}  
-**Severity:** {state.get('severity', 'High')}  
-**Root Cause:** {rca}  
-**Remediation Action:** `{prop.get('action', 'N/A')}`  
+    # Archive to Knowledge Base
+    kb.store_incident(
+        incident_id=inc_id,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        service=svc,
+        fault_type=fault_type,
+        root_cause=rca,
+        fix_action=action,
+        resolution_time_sec=duration_sec,
+        verified_recovery=is_rec_verified,
+        symptoms=state.get("correlation_reason", ""),
+        summary=f"Incident {inc_id} on {svc} ({fault_type})"
+    )
 
----
-
-## 1. Executive Summary
-During a simulated chaos event, `{svc}` degraded customer checkout flows.
-Checkout success dropped to **{state.get('checkout_success_pct', 100)}%**, putting approximately **{state.get('orders_at_risk', 0)} orders per minute** at risk (simulated estimate).
-PagerPal correlated alerts, localized root cause to `{rca}`, validated empirical claims, enforced policy clearances, and verified recovery.
-
-## 2. Telemetry and Impact
-- Observed p95 Latency: {before_m.get('p95_latency_ms', 600)}ms -> {after_m.get('p95_latency_ms', 15)}ms
-- Observed Error Rate: {before_m.get('error_rate_pct', 20)}% -> {after_m.get('error_rate_pct', 0.05)}%
-- Evidence Claims Verified: {len(verified)} verified, {len(dropped)} dropped unverified.
-
-## 3. Policy & Operator Governance
-- Action: `{prop.get('action', 'N/A')}`
-- Policy Preconditions: PASS (L2 Reversible)
-- Operator Approval: {state.get('approval_reviewer', 'Operator')} ({'Approved' if state.get('human_approved') else 'Denied/Rejected'})
-"""
     return {
         "postmortem_markdown": pm_md
     }
