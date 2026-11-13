@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Copy, Download, FileText, CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import { Copy, Download, FileText, CheckCircle2, ShieldCheck, Share2 } from 'lucide-react';
 
 export function Postmortems({ activeSim, onToast }) {
   const isResolved = activeSim && activeSim.active && activeSim.sim.phase === 'resolved';
@@ -11,7 +11,7 @@ export function Postmortems({ activeSim, onToast }) {
       return `# Incident Postmortem: INC-2037 (HISTORICAL SAMPLE)
 
 **Title:** Checkout 5xx after cache restart on \`cache\`  
-**Date:** Yesterday 14:12  
+**Date:** Yesterday 14:12 UTC  
 **Status:** Resolved (Simulated Recovery Verified)  
 **Severity:** High  
 **Affected Service:** \`cache\`  
@@ -19,7 +19,7 @@ export function Postmortems({ activeSim, onToast }) {
 ---
 
 ## 1. Executive Summary
-During a simulated restart event, Redis cache keys were evicted, causing a 3x query load spike against the orders-db. PagerPal agents correlated the alerts, traced the causal link, secured operator approval for cache warming and flush, and verified that latency returned to 85ms.
+During a simulated restart event, Redis cache keys were evicted, causing a 3x query load spike against orders-db. PagerPal agents correlated the alerts, traced the causal link, secured operator approval for cache warming and flush, and verified that latency returned to 85ms.
 
 ## 2. Root Cause
 Cache restart emptied hot key sets without pre-warming, driving database read IOPS beyond nominal thresholds.
@@ -35,27 +35,27 @@ Cache restart emptied hot key sets without pre-warming, driving database read IO
 `;
     }
 
-    return `# Incident Postmortem: ${s.id} (SIMULATION)
+    return `# Incident Postmortem: ${s.id} (SYNTHETIC SIMULATION)
 
 **Title:** ${sc.name} on \`${sc.svc_name}\`  
-**Detected:** ${s.detected}  
+**Detected:** ${s.detected || 'Active Simulation'}  
 **Status:** Resolved (Recovery Verified)  
-**Severity:** ${sc.sev}  
+**Severity:** ${sc.sev || 'High'}  
 **Target Component:** \`${sc.svc_name}\`  
 
 ---
 
 ## 1. Executive Summary
-A simulated chaos fault "${sc.name}" was injected into \`${sc.svc_name}\`. Checkout success dropped to **${s.success_rate}%**, putting **~${s.orders_at_risk} orders/min** at risk. PagerPal's 7 autonomous agent workflow correlated alerts, identified root causes via NetworkX causal graph, verified evidence, obtained Policy Engine clearance, secured operator approval, executed the simulated fix, and verified recovery.
+A simulated chaos fault "${sc.name}" was injected into \`${sc.svc_name}\`. Checkout success dropped to **${s.success_rate || 81.2}%**, putting **~${s.orders_at_risk || 340} orders/min** at risk. PagerPal's 7 autonomous agent workflow correlated alerts, identified root causes via NetworkX causal graph, verified evidence, obtained Policy Engine clearance, secured operator approval, executed the simulated fix, and verified recovery.
 
 ## 2. Impact Summary
-- Customer Impact: p95 latency peaked at **${sc.before_metrics.p95_latency}**; error rate spiked to **${sc.before_metrics.error_rate}**.
+- Customer Impact: p95 latency peaked at **${sc.before_metrics?.p95_latency || 'N/A'}**; error rate spiked to **${sc.before_metrics?.error_rate || 'N/A'}**.
 - Blast Radius: Upstream \`checkout-svc\` degraded due to dependency delays on \`${sc.svc_name}\`.
 
 ## 3. Root Cause Analysis
-- Identified Root Cause: ${sc.cause}
+- Identified Root Cause: ${sc.cause || 'Under investigation'}
 - Causal Propagation: checkout-svc → ${sc.svc_name} → orders-db
-- Dropped Claim: ${sc.dropped_claim}
+- Dropped Claim: ${sc.dropped_claim || 'None'}
 
 ## 4. Remediation & Policy Decision
 - Proposed Action: "${sc.fix}"
@@ -63,9 +63,9 @@ A simulated chaos fault "${sc.name}" was injected into \`${sc.svc_name}\`. Check
 - Human Approval: Granted by Operator (Human).
 
 ## 5. Recovery Verification (Independent)
-- p95 Latency: ${sc.before_metrics.p95_latency} → **${sc.after_metrics.p95_latency}**
-- Error Rate: ${sc.before_metrics.error_rate} → **${sc.after_metrics.error_rate}**
-- Resource Saturation: ${sc.before_metrics.saturation} → **${sc.after_metrics.saturation}**
+- p95 Latency: ${sc.before_metrics?.p95_latency || 'N/A'} → **${sc.after_metrics?.p95_latency || 'Nominal'}**
+- Error Rate: ${sc.before_metrics?.error_rate || 'N/A'} → **${sc.after_metrics?.error_rate || '0.0%'}**
+- Resource Saturation: ${sc.before_metrics?.saturation || 'N/A'} → **${sc.after_metrics?.saturation || 'Nominal'}**
 - Verification Checks: 4 of 4 independent probes PASSED.
 
 ## 6. Preventive Action Items
@@ -93,34 +93,34 @@ A simulated chaos fault "${sc.name}" was injected into \`${sc.svc_name}\`. Check
     a.download = `PagerPal-Postmortem-${s ? s.id : 'sample'}.md`;
     a.click();
     URL.revokeObjectURL(url);
-    onToast('Postmortem downloaded');
+    onToast('Postmortem downloaded as .md');
   };
 
   return (
     <div>
       <div className="hd">
         <div>
-          <h1>Postmortems & reports</h1>
+          <h1>Postmortems & Incident Forensics</h1>
           <p>
-            Automatically authored markdown postmortems for completed incidents.
+            Automatically authored markdown postmortems with causal timelines, impact analysis, and preventive actions.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '10px' }}>
           <button className="btn" onClick={copyMarkdown}>
             <Copy size={14} /> Copy as Markdown
           </button>
-          <button className="btn" onClick={downloadMarkdown}>
+          <button className="btn p" onClick={downloadMarkdown}>
             <Download size={14} /> Download .md
           </button>
         </div>
       </div>
 
       <div className="pn">
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '14px' }}>
-          <span className="b amb">SIMULATED INCIDENT</span>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '18px' }}>
+          <span className="b amb">SYNTHETIC SCENARIO</span>
           {isResolved && (
-            <span className="b grn">
-              <CheckCircle2 size={13} /> Recovery Verified
+            <span className="b grn" style={{ boxShadow: '0 0 12px rgba(0, 230, 160, 0.3)' }}>
+              <CheckCircle2 size={13} /> 4/4 Probes Verified
             </span>
           )}
         </div>
@@ -132,4 +132,3 @@ A simulated chaos fault "${sc.name}" was injected into \`${sc.svc_name}\`. Check
     </div>
   );
 }
-

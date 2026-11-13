@@ -6,7 +6,8 @@ import {
   Network, 
   BookOpen, 
   FileText, 
-  Settings 
+  Settings,
+  ShieldAlert
 } from 'lucide-react';
 
 const PAGES = [
@@ -21,10 +22,13 @@ const PAGES = [
 
 export function Navigation({ currentPage, onNavigate, isSimBusy }) {
   return (
-    <nav aria-label="Main">
+    <nav aria-label="Main Navigation">
       <div className="logo">
         <i>P</i>
-        <span>PagerPal</span>
+        <div>
+          <span>PagerPal</span>
+          <span className="logo-sub">AI SRE Console</span>
+        </div>
       </div>
       {PAGES.map((p) => {
         const Icon = p.icon;
@@ -37,18 +41,42 @@ export function Navigation({ currentPage, onNavigate, isSimBusy }) {
             aria-current={isActive ? 'page' : undefined}
           >
             <span className="g">
-              <Icon size={16} />
+              <Icon size={17} />
             </span>
             <span>{p.label}</span>
             {p.id === 'live' && isSimBusy && (
-              <span className="b amb" style={{ marginLeft: 'auto', padding: '1px 6px', fontSize: '10px' }}>
+              <span 
+                className="b amb" 
+                style={{ 
+                  marginLeft: 'auto', 
+                  padding: '2px 7px', 
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  boxShadow: '0 0 10px rgba(255, 174, 66, 0.4)' 
+                }}
+              >
                 LIVE
               </span>
             )}
           </button>
         );
       })}
+
+      <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(0, 217, 255, 0.08)' }}>
+        <div style={{
+          background: 'rgba(16, 29, 48, 0.6)',
+          border: '1px solid rgba(0, 217, 255, 0.12)',
+          borderRadius: '10px',
+          padding: '12px',
+          fontSize: '11px',
+          color: 'var(--text2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--cyan)', fontWeight: 600, marginBottom: '4px' }}>
+            <ShieldAlert size={13} /> Policy Guard
+          </div>
+          <div>L2 Reversible actions locked behind human approval gate.</div>
+        </div>
+      </div>
     </nav>
   );
 }
-

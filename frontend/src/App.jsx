@@ -10,6 +10,7 @@ import { KnowledgeBase } from './components/KnowledgeBase';
 import { Postmortems } from './components/Postmortems';
 import { Settings } from './components/Settings';
 import { ChaosModal } from './components/ChaosModal';
+import { ParticleBackground } from './components/ParticleBackground';
 import { api } from './api';
 
 export default function App() {
@@ -30,7 +31,7 @@ export default function App() {
     setToastMessage(msg);
     setTimeout(() => {
       setToastMessage((cur) => (cur === msg ? null : cur));
-    }, 3200);
+    }, 3600);
   };
 
   const isSimBusy =
@@ -59,13 +60,13 @@ export default function App() {
           const currentPhase = sim.sim.phase;
           if (prevSimPhaseRef.current !== currentPhase) {
             if (currentPhase === 'await') {
-              showToast('Policy Engine passed. Remediation awaits human approval!');
+              showToast('Policy Engine passed: Remediation awaits human approval!');
             } else if (currentPhase === 'resolved') {
               showToast('Recovery verified! Incident resolved & archived in Knowledge Base.');
             } else if (currentPhase === 'rejected') {
-              showToast('Remediation rejected. Incident escalated to on-call lead.');
+              showToast('Remediation rejected: Incident escalated to on-call lead.');
             } else if (currentPhase === 'stopped') {
-              showToast('Emergency stop executed. Rollback initiated.');
+              showToast('Emergency stop executed: Rollback initiated.');
             }
             prevSimPhaseRef.current = currentPhase;
           }
@@ -74,8 +75,8 @@ export default function App() {
       if (incs) setIncidents(incs);
       if (kb) setKbItems(kb);
 
-      // Refresh graph if on map page
-      if (currentPage === 'map') {
+      // Refresh graph if on map or overview page
+      if (currentPage === 'map' || currentPage === 'overview') {
         const activeId = sim && sim.active ? sim.sim.id : 'INC-2037';
         const g = await api.getIncidentGraph(activeId).catch(() => null);
         if (g) setGraphData(g);
@@ -115,7 +116,7 @@ export default function App() {
     try {
       const res = await api.startSimulation(scenarioId);
       setActiveSim(res);
-      showToast('Chaos fault injected! Agents dispatched.');
+      showToast('Chaos fault injected: Autonomous agents dispatched.');
       setCurrentPage('live');
       refreshData();
     } catch (e) {
@@ -140,7 +141,7 @@ export default function App() {
     try {
       const res = await api.rejectIncident(activeSim.sim.id, 'Operator (Human)', reason);
       setActiveSim(res);
-      showToast('Remediation rejected. Incident escalated.');
+      showToast('Remediation rejected: Incident escalated.');
       refreshData();
     } catch (e) {
       showToast('Rejection error: ' + e.message);
@@ -161,6 +162,10 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* Ambient Particle Background */}
+      <ParticleBackground />
+
+      {/* Left Navigation Bar */}
       <Navigation
         currentPage={currentPage}
         onNavigate={(page) => {
@@ -174,7 +179,8 @@ export default function App() {
         isSimBusy={isSimBusy}
       />
 
-      <div>
+      {/* Main Layout Area */}
+      <div style={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
         <TopBar
           isSimBusy={isSimBusy}
           onOpenChaos={() => setIsChaosOpen(true)}
@@ -187,6 +193,8 @@ export default function App() {
               onOpenChaos={() => setIsChaosOpen(true)}
               onOpenIncident={handleOpenIncident}
               isSimBusy={isSimBusy}
+              activeSim={activeSim}
+              onNavigate={setCurrentPage}
             />
           )}
 
@@ -262,10 +270,10 @@ export default function App() {
       {/* Floating Notification Toast */}
       {toastMessage && (
         <div className="toast" role="status">
-          {toastMessage}
+          <span style={{ color: 'var(--cyan)' }}>✦</span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
   );
 }
-

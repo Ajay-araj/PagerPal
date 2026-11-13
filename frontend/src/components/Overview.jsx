@@ -1,5 +1,6 @@
 import React from 'react';
-import { Zap, AlertTriangle, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Zap, AlertTriangle, ShieldCheck, CheckCircle2, AlertCircle, Activity, ArrowUpRight } from 'lucide-react';
+import { Topology3D } from './Topology3D';
 
 const SEVB = {
   Critical: ['red', ''],
@@ -18,7 +19,7 @@ const STB = {
   Stopped: ['red', '']
 };
 
-export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) {
+export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, activeSim, onNavigate }) {
   const d = dashboard || {
     is_simulation_active: false,
     active_incidents: 0,
@@ -44,13 +45,14 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
 
   return (
     <div>
+      {/* Header */}
       <div className="hd">
         <div>
-          <h1>Operations overview</h1>
+          <h1>Operations Command Centre</h1>
           <p>
             {isSimBusy
-              ? '1 incident is currently being handled by autonomous agents.'
-              : 'All services healthy. No active incidents.'}
+              ? 'Multi-agent orchestration in progress. Active incident under autonomous investigation.'
+              : 'Autonomous telemetry nominal. 7 core microservices monitored across availability zones.'}
           </p>
         </div>
         <button className="btn p big" onClick={onOpenChaos}>
@@ -58,20 +60,22 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
         </button>
       </div>
 
+      {/* Simulation Notice Banner */}
       <div className="note">
-        <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+        <AlertTriangle size={16} style={{ flexShrink: 0, color: 'var(--amber)' }} />
         <span>
-          Simulation environment. No production systems are connected. All figures are sample data until simulations produce measurements.
+          <b>SIMULATION ENVIRONMENT</b> · Sandboxed telemetry generator active. All metrics, logs, and spans are synthetic; no production infrastructure is affected.
         </span>
       </div>
 
+      {/* Top HUD Metrics Strip */}
       <div className="strip">
         <div>
           <b>{d.active_incidents}</b>
           <span>Active incidents</span>
         </div>
         <div>
-          <b>{d.critical_alerts}</b>
+          <b style={{ color: d.critical_alerts > 0 ? 'var(--red)' : '#FFFFFF' }}>{d.critical_alerts}</b>
           <span>Critical alerts</span>
         </div>
         <div>
@@ -79,43 +83,73 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
           <span>Services affected</span>
         </div>
         <div>
-          <b>{d.mttr}</b>
-          <span>MTTR · simulated estimate</span>
+          <b style={{ color: 'var(--cyan)' }}>{d.mttr}</b>
+          <span>MTTR · measured</span>
         </div>
       </div>
 
+      {/* Central 3D Service Topology Centerpiece */}
+      <div className="pn" style={{ padding: '16px', marginBottom: '24px', background: 'rgba(8, 15, 29, 0.92)' }}>
+        <Topology3D 
+          activeSim={activeSim}
+          height="380px"
+          title="Live Service Topology & Failure Propagation Mesh"
+          onSelectNode={(node) => {
+            if (onNavigate) onNavigate('map');
+          }}
+        />
+      </div>
+
+      {/* Analytics & Service Health Grid */}
       <div className="grid">
         <div className="pn">
-          <h2>Incidents per day</h2>
-          <svg viewBox="0 0 400 160" width="100%" role="img" aria-label="Incidents per day trend chart">
+          <h2>
+            <Activity size={16} style={{ color: 'var(--cyan)' }} />
+            Incidents Per Day (7-Day Trend)
+          </h2>
+          <svg viewBox="0 0 400 150" width="100%" role="img" aria-label="Incidents per day trend chart">
+            <defs>
+              <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#00D9FF" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#0B1424" stopOpacity="0.4" />
+              </linearGradient>
+              <linearGradient id="barGradActive" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FFAE42" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#0B1424" stopOpacity="0.4" />
+              </linearGradient>
+            </defs>
             {trendData.map((v, i) => {
-              const h = (v.count / maxVal) * 105;
+              const h = (v.count / maxVal) * 95;
               const x = 32 + i * 50;
               const isToday = i === trendData.length - 1;
               return (
                 <g key={v.day}>
                   <rect
                     x={x}
-                    y={130 - h}
-                    width={30}
+                    y={120 - h}
+                    width={32}
                     height={h}
-                    rx={4}
-                    fill={isToday ? 'var(--amb)' : '#273b5e'}
+                    rx={5}
+                    fill={isToday ? 'url(#barGradActive)' : 'url(#barGrad)'}
+                    stroke={isToday ? 'rgba(255, 174, 66, 0.5)' : 'rgba(0, 217, 255, 0.3)'}
+                    strokeWidth={1}
                   />
                   <text
-                    x={x + 15}
-                    y={122 - h}
+                    x={x + 16}
+                    y={112 - h}
                     textAnchor="middle"
-                    fill="var(--tx)"
+                    fill={isToday ? 'var(--amber)' : '#FFFFFF'}
                     fontSize="11"
+                    fontFamily="'JetBrains Mono', monospace"
+                    fontWeight="600"
                   >
                     {v.count}
                   </text>
                   <text
-                    x={x + 15}
-                    y={148}
+                    x={x + 16}
+                    y={140}
                     textAnchor="middle"
-                    fill="var(--mu)"
+                    fill="var(--text2)"
                     fontSize="11"
                   >
                     {v.day}
@@ -123,19 +157,21 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
                 </g>
               );
             })}
-            <line x1="16" x2="384" y1="130" y2="130" stroke="var(--ln)" />
+            <line x1="16" x2="384" y1="120" y2="120" stroke="rgba(0, 217, 255, 0.12)" />
           </svg>
-          <span className="sub">Count of incidents. Today's bar adds active simulated chaos runs.</span>
+          <span className="sub" style={{ marginTop: '8px', display: 'block' }}>
+            Daily incident aggregation. Today's figure updates in real time with active chaos injection cycles.
+          </span>
         </div>
 
         <div className="pn">
-          <h2>Service health</h2>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h2>Service Fleet Health Matrix</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {d.service_health && d.service_health.map((svc) => (
               <div key={svc.id} className="svc">
-                <span className="mono">{svc.name}</span>
+                <span className="mono" style={{ fontWeight: 600 }}>{svc.name}</span>
                 <span className={`b ${svc.color}`}>
-                  {svc.color === 'grn' ? '' : svc.color === 'red' ? '' : ''} {svc.status}
+                  {svc.status}
                 </span>
               </div>
             ))}
@@ -143,9 +179,10 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
         </div>
       </div>
 
+      {/* Recent Incidents & Agent Stream Grid */}
       <div className="grid">
         <div className="pn">
-          <h2>Recent incidents</h2>
+          <h2>Recent Incident Ledger</h2>
           <div className="sc">
             <table>
               <thead>
@@ -156,7 +193,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
                   <th>Severity</th>
                   <th>Detected</th>
                   <th>Status</th>
-                  <th>Active agent</th>
+                  <th>Active Agent</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,14 +208,14 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
                       onKeyDown={(e) => e.key === 'Enter' && onOpenIncident(r.id, r.is_live)}
                     >
                       <td className="id">{r.id}</td>
-                      <td>{r.title}</td>
-                      <td className="mono">{r.service}</td>
+                      <td><b>{r.title}</b></td>
+                      <td className="mono" style={{ color: 'var(--text2)' }}>{r.service}</td>
                       <td>
                         <span className={`b ${sevConf[0]}`}>
                           {sevConf[1]} {r.severity}
                         </span>
                       </td>
-                      <td>{r.detected_at}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text2)' }}>{r.detected_at}</td>
                       <td>
                         <span className={`b ${stConf[0]}`}>
                           {stConf[1]} {r.status}
@@ -188,7 +225,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
                         {r.status === 'Resolved' ? (
                           <span className="sub">none</span>
                         ) : (
-                          r.active_agent
+                          <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>{r.active_agent}</span>
                         )}
                       </td>
                     </tr>
@@ -200,12 +237,12 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
         </div>
 
         <div className="pn">
-          <h2>Agent activity stream</h2>
+          <h2>Autonomous Agent Activity Stream</h2>
           <ul className="tl">
             {d.recent_logs && d.recent_logs.map((l, idx) => (
               <li key={idx} className={l.c || 'cy'}>
-                <span className="t mono">{l.t}</span>
-                <b>{l.a}:</b> {l.m}
+                <span className="t mono">[{l.t}]</span>
+                <b>{l.a}:</b> <span>{l.m}</span>
               </li>
             ))}
           </ul>
@@ -214,4 +251,3 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
     </div>
   );
 }
-

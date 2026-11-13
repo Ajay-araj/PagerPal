@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Zap } from 'lucide-react';
+import { Search, Zap, AlertTriangle, ShieldCheck, Filter } from 'lucide-react';
 
 const SEVB = {
   Critical: ['red', ''],
@@ -41,8 +41,8 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
     <div>
       <div className="hd">
         <div>
-          <h1>Incidents</h1>
-          <p>Every incident recorded in this simulation environment.</p>
+          <h1>Incident Ledger & Telemetry</h1>
+          <p>Complete historical registry of autonomous investigations and recovery operations.</p>
         </div>
         <button className="btn p" onClick={onOpenChaos}>
           <Zap size={14} /> Start Chaos Mode
@@ -51,24 +51,24 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
 
       <div className="pn">
         <div className="tools">
-          <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
             <Search
               size={15}
               style={{
                 position: 'absolute',
-                left: '10px',
+                left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: 'var(--mu)'
+                color: 'var(--text2)'
               }}
             />
             <input
               type="text"
               aria-label="Search incidents"
-              placeholder="Search by ID, title, or affected service..."
+              placeholder="Search by ID, title, or target service..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              style={{ width: '100%', paddingLeft: '32px' }}
+              style={{ width: '100%', paddingLeft: '36px' }}
             />
           </div>
 
@@ -77,7 +77,7 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
           >
-            <option value="">All severities</option>
+            <option value="">All Severities</option>
             <option value="Critical">Critical</option>
             <option value="High">High</option>
             <option value="Medium">Medium</option>
@@ -89,7 +89,7 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All statuses</option>
+            <option value="">All Statuses</option>
             <option value="Resolved">Resolved</option>
             <option value="Investigating">Investigating</option>
             <option value="Awaiting approval">Awaiting approval</option>
@@ -102,9 +102,9 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
 
         {filtered.length === 0 ? (
           <div className="empty">
-            <b>No incidents match your filter</b>
-            <br />
-            Clear the search query or start Chaos Mode to inject a new failure.
+            <AlertTriangle size={36} style={{ color: 'var(--text2)', margin: '0 auto 10px', opacity: 0.5 }} />
+            <b style={{ color: '#FFFFFF', display: 'block', marginBottom: '6px' }}>No Incidents Match Current Filters</b>
+            <span>Clear the search query or launch Chaos Mode to inject a new failure.</span>
           </div>
         ) : (
           <div className="sc">
@@ -113,11 +113,11 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
                 <tr>
                   <th>ID</th>
                   <th>Title</th>
-                  <th>Service</th>
+                  <th>Target Service</th>
                   <th>Severity</th>
-                  <th>Detected</th>
+                  <th>Detection Timestamp</th>
                   <th>Status</th>
-                  <th>Active agent</th>
+                  <th>Active Agent</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,13 +133,13 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
                     >
                       <td className="id">{r.id}</td>
                       <td><b>{r.title}</b></td>
-                      <td className="mono">{r.service}</td>
+                      <td className="mono" style={{ color: 'var(--text2)' }}>{r.service}</td>
                       <td>
                         <span className={`b ${sevConf[0]}`}>
                           {sevConf[1]} {r.severity}
                         </span>
                       </td>
-                      <td>{r.detected_at}</td>
+                      <td style={{ fontSize: '12px', color: 'var(--text2)' }}>{r.detected_at}</td>
                       <td>
                         <span className={`b ${stConf[0]}`}>
                           {stConf[1]} {r.status}
@@ -149,7 +149,7 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
                         {r.status === 'Resolved' ? (
                           <span className="sub">none</span>
                         ) : (
-                          <span style={{ color: 'var(--cy)' }}>{r.active_agent}</span>
+                          <span style={{ color: 'var(--cyan)', fontWeight: 600 }}>{r.active_agent}</span>
                         )}
                       </td>
                     </tr>
@@ -163,4 +163,3 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
     </div>
   );
 }
-

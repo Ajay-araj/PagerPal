@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Bell, BarChart3, Play, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Bell, BarChart3, Play, CheckCircle2, ShieldAlert, Cpu } from 'lucide-react';
 import { api } from '../api';
 
 export function Settings({ onToast }) {
@@ -28,46 +28,46 @@ export function Settings({ onToast }) {
     <div>
       <div className="hd">
         <div>
-          <h1>Settings & evaluation</h1>
+          <h1>Settings & Evaluation Benchmark</h1>
           <p>
-            Safety boundary enforcement, notifications, and measured evaluation targets.
+            Safety boundary enforcement, autonomous policy parameters, notification dispatch, and Section 10 target verification.
           </p>
         </div>
       </div>
 
       <div className="pn">
         <h2>
-          <ShieldCheck size={18} style={{ verticalAlign: 'middle', marginRight: '6px', color: 'var(--grn)' }} />
-          Safety & policy engine configuration
+          <ShieldCheck size={18} style={{ verticalAlign: 'middle', marginRight: '8px', color: 'var(--green)' }} />
+          Safety & Policy Engine Configuration
         </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--ln)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
             <div>
-              <b>Simulation boundary</b>
-              <div className="sub">All commands run strictly within simulated services; no prod infrastructure is touched.</div>
+              <b style={{ color: '#FFFFFF' }}>Simulation Boundary Isolation</b>
+              <div className="sub">All commands run strictly within simulated synthetic services; no real infrastructure is touched.</div>
             </div>
             <span className="b grn">LOCKED (Enforced)</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--ln)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
             <div>
-              <b>Human approval gate</b>
+              <b style={{ color: '#FFFFFF' }}>Human Approval Gate</b>
               <div className="sub">Level 2 reversible remediations require explicit operator approval before execution.</div>
             </div>
             <span className="b grn">LOCKED (100% Required)</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--ln)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
             <div>
-              <b>Independent Policy Engine</b>
+              <b style={{ color: '#FFFFFF' }}>Independent Policy Engine</b>
               <div className="sub">Separate rule-based safety authority. The LLM is never the final permission decider.</div>
             </div>
             <span className="b cy">ACTIVE</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0' }}>
             <div>
-              <b>Recovery verification</b>
+              <b style={{ color: '#FFFFFF' }}>Empirical Recovery Verification</b>
               <div className="sub">Requires 4 of 4 independent empirical checks. Command execution alone is never counted as recovery.</div>
             </div>
             <span className="b grn">ENFORCED</span>
@@ -75,14 +75,14 @@ export function Settings({ onToast }) {
         </div>
       </div>
 
-      {/* Notifications */}
+      {/* Team Notifications */}
       <div className="pn">
         <h2>
-          <Bell size={18} style={{ verticalAlign: 'middle', marginRight: '6px', color: 'var(--cy)' }} />
-          Team notifications
+          <Bell size={18} style={{ verticalAlign: 'middle', marginRight: '8px', color: 'var(--cyan)' }} />
+          Team Notifications & Incident Webhooks
         </h2>
-        <p className="sub" style={{ margin: '4px 0 12px' }}>
-          Incident notifications and generated postmortems are dispatched to this endpoint.
+        <p className="sub" style={{ margin: '6px 0 16px' }}>
+          Real-time incident dispatches and generated postmortems are routed to this webhook.
         </p>
         <div className="tools">
           <input
@@ -90,41 +90,41 @@ export function Settings({ onToast }) {
             aria-label="Webhook URL"
             value={webhookUrl}
             onChange={(e) => setWebhookUrl(e.target.value)}
-            style={{ flex: 1, minWidth: '260px' }}
+            style={{ flex: 1, minWidth: '280px' }}
           />
           <button className="btn p" onClick={handleSaveWebhook}>
-            Save webhook
+            Save Webhook
           </button>
         </div>
       </div>
 
       {/* Section 10 Evaluation Suite */}
       <div className="pn">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h2>
-              <BarChart3 size={18} style={{ verticalAlign: 'middle', marginRight: '6px', color: 'var(--amb)' }} />
-              Section 10 · Evaluation target benchmark
+              <BarChart3 size={18} style={{ verticalAlign: 'middle', marginRight: '8px', color: 'var(--amber)' }} />
+              Section 10 · Evaluation Target Benchmark
             </h2>
-            <p className="sub" style={{ margin: '4px 0 0' }}>
-              Run automated test evaluation across the 6 chaos scenarios to measure actual accuracy, policy enforcement, and verified recovery.
+            <p className="sub" style={{ margin: '6px 0 0' }}>
+              Run automated test evaluation across the 12 chaos scenarios to measure actual accuracy, policy enforcement, and verified recovery.
             </p>
           </div>
-          <button className="btn p" onClick={handleRunEvaluation} disabled={evaluating}>
-            <Play size={14} /> {evaluating ? 'Running benchmark…' : 'Run evaluation benchmark'}
+          <button className="btn p big" onClick={handleRunEvaluation} disabled={evaluating}>
+            <Play size={15} /> {evaluating ? 'Running Benchmark…' : 'Run Evaluation Benchmark'}
           </button>
         </div>
 
         {evalResults && (
-          <div style={{ marginTop: '20px' }}>
-            <h3 style={{ marginBottom: '10px' }}>Target vs. Measured actual results</h3>
+          <div style={{ marginTop: '24px' }}>
+            <h3 style={{ marginBottom: '12px', color: '#FFFFFF' }}>Target vs. Measured Actual Benchmark Results</h3>
             <div className="sc">
               <table>
                 <thead>
                   <tr>
-                    <th>Evaluation metric</th>
-                    <th>Synopsis target</th>
-                    <th>Measured actual</th>
+                    <th>Evaluation Metric</th>
+                    <th>Synopsis Target</th>
+                    <th>Measured Actual</th>
                     <th>Status</th>
                   </tr>
                 </thead>
@@ -132,56 +132,56 @@ export function Settings({ onToast }) {
                   <tr>
                     <td><b>Top-1 root-cause accuracy</b></td>
                     <td className="mono">80% or higher</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.top1_accuracy.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.top1_accuracy.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Top-3 root-cause accuracy</b></td>
                     <td className="mono">90% or higher</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.top3_accuracy.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.top3_accuracy.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Successful remediation with verified recovery</b></td>
                     <td className="mono">95% or higher</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.remediation_verified.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.remediation_verified.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Human approval enforced before remediation</b></td>
                     <td className="mono">100%</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.human_approval.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.human_approval.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Recovery verification after every remediation</b></td>
                     <td className="mono">100%</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.recovery_verification.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.recovery_verification.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Postmortem generated for completed incidents</b></td>
                     <td className="mono">100%</td>
-                    <td className="mono" style={{ color: 'var(--grn)' }}>
-                      <b>{evalResults.target_comparison.postmortems.actual}</b>
+                    <td className="mono" style={{ color: 'var(--green)', fontWeight: 700 }}>
+                      {evalResults.target_comparison.postmortems.actual}
                     </td>
                     <td><span className="b grn"> MET</span></td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="sub" style={{ marginTop: '10px' }}>
-              Evaluated {evalResults.scenarios_tested_count} chaos scenarios: deploy, db, crash, net, cpu, mem.
+            <p className="sub" style={{ marginTop: '12px' }}>
+              Evaluated {evalResults.scenarios_tested_count} chaos scenarios: deploy, db, crash, net, cpu, mem, cert, queue, disk, dns, thread, drift.
             </p>
           </div>
         )}
@@ -189,4 +189,3 @@ export function Settings({ onToast }) {
     </div>
   );
 }
-

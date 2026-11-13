@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, BookOpen, AlertCircle } from 'lucide-react';
+import { Search, BookOpen, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 
 export function KnowledgeBase({ items }) {
   const [query, setQuery] = useState('');
@@ -20,17 +20,17 @@ export function KnowledgeBase({ items }) {
     <div>
       <div className="hd">
         <div>
-          <h1>Knowledge base</h1>
+          <h1>SQLite Operational Knowledge Base</h1>
           <p>
-            Historical incident runbooks and verified resolutions stored in SQLite.
+            Historical incident runbooks, verified remediations, and causal resolutions persisted in SQLite.
           </p>
         </div>
       </div>
 
-      <div className="note" style={{ borderColor: 'var(--cy)', background: '#0a1d2e', color: '#bce4ff' }}>
-        <AlertCircle size={16} style={{ flexShrink: 0 }} />
+      <div className="note" style={{ borderColor: 'rgba(0, 217, 255, 0.3)', background: 'rgba(10, 29, 46, 0.75)', color: '#bce4ff' }}>
+        <AlertCircle size={16} style={{ flexShrink: 0, color: 'var(--cyan)' }} />
         <span>
-          Past incidents serve as reference suggestions only. PagerPal never automatically reapplies a past fix without fresh evidence correlation and policy engine evaluation.
+          <b>HARD SAFETY RULE 8:</b> Past incidents serve strictly as reference suggestions. PagerPal never automatically reapplies a past fix without fresh empirical evidence verification and independent Policy Engine evaluation.
         </span>
       </div>
 
@@ -41,27 +41,27 @@ export function KnowledgeBase({ items }) {
               size={15}
               style={{
                 position: 'absolute',
-                left: '10px',
+                left: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: 'var(--mu)'
+                color: 'var(--text2)'
               }}
             />
             <input
               type="text"
               aria-label="Search knowledge base"
-              placeholder="Search symptoms, root causes, or runbook fixes..."
+              placeholder="Search symptoms, root causes, or runbook remediations..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              style={{ width: '100%', paddingLeft: '32px' }}
+              style={{ width: '100%', paddingLeft: '36px' }}
             />
           </div>
         </div>
 
         {filtered.length === 0 ? (
           <div className="empty">
-            <BookOpen size={36} style={{ color: 'var(--mu)', margin: '0 auto 8px' }} />
-            <b>No knowledge base items match your query</b>
+            <BookOpen size={40} style={{ color: 'var(--text2)', margin: '0 auto 12px', opacity: 0.5 }} />
+            <b style={{ color: '#FFFFFF', display: 'block' }}>No Knowledge Base Records Found</b>
           </div>
         ) : (
           <div className="sc">
@@ -70,10 +70,10 @@ export function KnowledgeBase({ items }) {
                 <tr>
                   <th>ID</th>
                   <th>Incident & Symptoms</th>
-                  <th>Root cause</th>
-                  <th>Approved fix</th>
-                  <th>Human approval</th>
-                  <th>Verified recovery</th>
+                  <th>Root Cause</th>
+                  <th>Approved Runbook Fix</th>
+                  <th>Human Approval</th>
+                  <th>Verified Recovery</th>
                 </tr>
               </thead>
               <tbody>
@@ -81,14 +81,14 @@ export function KnowledgeBase({ items }) {
                   <tr key={item.id}>
                     <td className="id">{item.id}</td>
                     <td>
-                      <b>{item.title}</b>
+                      <b style={{ color: '#FFFFFF' }}>{item.title}</b>
                       <br />
-                      <span className="sub mono" style={{ color: 'var(--mu)' }}>
+                      <span className="mono" style={{ color: 'var(--text2)', fontSize: '11.5px' }}>
                         {item.service} · {item.symptoms}
                       </span>
                     </td>
-                    <td>{item.root_cause}</td>
-                    <td style={{ color: 'var(--cy)' }}><b>{item.fix}</b></td>
+                    <td style={{ color: 'var(--text)' }}>{item.root_cause}</td>
+                    <td style={{ color: 'var(--cyan)', fontWeight: 600 }}>{item.fix}</td>
                     <td>
                       <span className="b grn"> {item.approval_status}</span>
                     </td>
@@ -105,4 +105,3 @@ export function KnowledgeBase({ items }) {
     </div>
   );
 }
-
