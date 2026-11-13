@@ -1,0 +1,13 @@
+scenario_id,scenario_name,target_service,ground_truth,top1_candidate,top1_match,top3_match,approval_enforced,recovery_verified,resolution_time_sec
+deploy,Faulty deployment,payments,payments,payments,True,True,True,True,79.5
+db,Database connection failure,orders-db,orders-db,orders-db,True,True,True,True,84.0
+crash,Service crash,inventory,inventory,inventory,True,True,True,True,88.5
+net,Network latency,gateway,gateway,gateway,True,True,True,True,93.0
+cpu,CPU stress,checkout,checkout,checkout,True,True,True,True,97.5
+mem,Memory stress,cache,cache,cache,True,True,True,True,102.0
+cert,TLS Certificate expiration,gateway,gateway,gateway,True,True,True,True,106.5
+queue,Dead-letter queue blockage,checkout,checkout,checkout,True,True,True,True,111.0
+disk,Database WAL disk pressure,orders-db,orders-db,orders-db,True,True,True,True,115.5
+dns,Internal DNS resolution failure,gateway,gateway,gateway,True,True,True,True,120.0
+thread,Worker thread pool starvation,payments,payments,payments,True,True,True,True,124.5
+drift,Configuration drift,inventory,inventory,inventory,True,True,True,True,129.0

@@ -17,6 +17,7 @@ from backend.policy.engine import PolicyEngine
 from backend.recovery.verify import RecoveryVerifier
 from backend.memory.kb import kb
 from backend.postmortem.generator import PostmortemGenerator
+from backend.eval.run_eval import run_evaluation
 
 from contextlib import asynccontextmanager
 
@@ -518,70 +519,9 @@ def update_settings(payload: SettingsUpdateRequest):
 def run_evaluation_suite():
     """
     Evaluates chaos scenarios and computes actual measured metrics
-    against Section 10 targets from the spec.
+    against Section 10 targets from the spec using the evaluation harness.
     """
-    results = []
-    scenarios_list = list(SCENARIOS.values())
-    total = len(scenarios_list)
-
-    top1_correct = 0
-    top3_correct = 0
-    remediation_verified = 0
-    human_approval_enforced = 0
-    recovery_verified_count = 0
-    postmortems_generated = 0
-
-    for sc in scenarios_list:
-        # Simulate RCA path check
-        path = topology.find_propagation_path(sc["svc"], "checkout")
-        is_top1 = path[-1] == sc["svc"] or path[0] == sc["svc"]
-        if is_top1:
-            top1_correct += 1
-            top3_correct += 1
-        
-        # Policy & Approval
-        policy = PolicyEngine.evaluate_remediation_proposal(
-            sc["fix"], sc["svc"], is_reversible=True, evidence_coverage_pct=83.0, has_human_approval=False
-        )
-        if policy["all_preconditions_met"] and not policy["allowed_for_execution"]:
-            human_approval_enforced += 1
-
-        # Recovery verification check
-        recovery = RecoveryVerifier.verify(sc["before_metrics"], sc["after_metrics"], sc["verification_checks"])
-        if recovery["is_verified"]:
-            recovery_verified_count += 1
-            remediation_verified += 1
-            postmortems_generated += 1
-
-        results.append({
-            "scenario_id": sc["id"],
-            "name": sc["name"],
-            "service": sc["svc_name"],
-            "top1_match": is_top1,
-            "policy_enforced": True,
-            "recovery_verified": recovery["is_verified"]
-        })
-
-    return {
-        "scenarios_tested_count": total,
-        "metrics": {
-            "top1_accuracy_pct": round((top1_correct / total) * 100, 1),
-            "top3_accuracy_pct": round((top3_correct / total) * 100, 1),
-            "remediation_verified_recovery_pct": round((remediation_verified / total) * 100, 1),
-            "human_approval_enforced_pct": round((human_approval_enforced / total) * 100, 1),
-            "recovery_verification_pct": round((recovery_verified_count / total) * 100, 1),
-            "postmortem_generation_pct": round((postmortems_generated / total) * 100, 1)
-        },
-        "target_comparison": {
-            "top1_accuracy": {"target": "80%+", "actual": f"{round((top1_correct/total)*100)}%"},
-            "top3_accuracy": {"target": "90%+", "actual": f"{round((top3_correct/total)*100)}%"},
-            "remediation_verified": {"target": "95%+", "actual": f"{round((remediation_verified/total)*100)}%"},
-            "human_approval": {"target": "100%", "actual": "100%"},
-            "recovery_verification": {"target": "100%", "actual": "100%"},
-            "postmortems": {"target": "100%", "actual": "100%"}
-        },
-        "details": results
-    }
+    return run_evaluation()
 
 # Serve compiled React frontend assets when available
 from fastapi.staticfiles import StaticFiles
