@@ -1,0 +1,32 @@
+# Environment & Secrets
+.env
+*.env.local
+
+# Node.js
+frontend/node_modules/
+node_modules/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+frontend/dist/
+*.egg-info/
+build/
+dist/
+
+# SQLite runtime DB (can be recreated or initialized)
+*.db-journal

@@ -1,0 +1,130 @@
+version: "1.0"
+environment: "SIMULATION"
+
+services:
+  gateway:
+    id: "gateway"
+    name: "api-gateway"
+    display: "API Gateway"
+    tier: "edge"
+    coords: { x: 90, y: 170 }
+    sli:
+      p95_latency_ms: 15.0
+      error_rate_pct: 0.05
+      cpu_pct: 25.0
+      mem_pct: 35.0
+
+  checkout:
+    id: "checkout"
+    name: "checkout-svc"
+    display: "Checkout Service"
+    tier: "core"
+    coords: { x: 290, y: 170 }
+    sli:
+      p95_latency_ms: 45.0
+      error_rate_pct: 0.1
+      cpu_pct: 40.0
+      mem_pct: 45.0
+
+  payments:
+    id: "payments"
+    name: "payments-svc"
+    display: "Payments Service"
+    tier: "backend"
+    coords: { x: 490, y: 90 }
+    sli:
+      p95_latency_ms: 85.0
+      error_rate_pct: 0.1
+      cpu_pct: 35.0
+      mem_pct: 50.0
+
+  inventory:
+    id: "inventory"
+    name: "inventory-svc"
+    display: "Inventory Service"
+    tier: "backend"
+    coords: { x: 490, y: 250 }
+    sli:
+      p95_latency_ms: 30.0
+      error_rate_pct: 0.05
+      cpu_pct: 30.0
+      mem_pct: 40.0
+
+  auth:
+    id: "auth"
+    name: "auth-svc"
+    display: "Auth Service"
+    tier: "core"
+    coords: { x: 290, y: 60 }
+    sli:
+      p95_latency_ms: 20.0
+      error_rate_pct: 0.02
+      cpu_pct: 25.0
+      mem_pct: 30.0
+
+  orders-db:
+    id: "orders-db"
+    name: "orders-db"
+    display: "Orders Database"
+    tier: "datastore"
+    coords: { x: 690, y: 90 }
+    sli:
+      p95_latency_ms: 15.0
+      error_rate_pct: 0.0
+      cpu_pct: 30.0
+      mem_pct: 55.0
+
+  cache:
+    id: "cache"
+    name: "cache"
+    display: "Redis Cache"
+    tier: "datastore"
+    coords: { x: 690, y: 250 }
+    sli:
+      p95_latency_ms: 5.0
+      error_rate_pct: 0.0
+      cpu_pct: 20.0
+      mem_pct: 45.0
+
+dependencies:
+  - from: "gateway"
+    to: "checkout"
+  - from: "checkout"
+    to: "payments"
+  - from: "checkout"
+    to: "inventory"
+  - from: "checkout"
+    to: "auth"
+  - from: "payments"
+    to: "orders-db"
+  - from: "inventory"
+    to: "cache"
+
+thresholds:
+  correlation_window_sec: 90
+  max_dependency_hops: 2
+  min_evidence_coverage_pct: 80.0
+  min_confidence_pct: 75.0
+  consecutive_health_probes: 3
+
+action_registry:
+  L1:
+    - "get_pod_logs"
+    - "get_service_metrics"
+    - "get_trace_spans"
+    - "get_deploy_history"
+    - "check_health_probes"
+    - "describe_service"
+  L2:
+    - "rollback_deployment"
+    - "reset_connection_pooler"
+    - "restart_service_container"
+    - "shift_traffic_zone"
+    - "scale_service_replicas"
+    - "flush_and_restart_cache"
+  L3_PROHIBITED:
+    - "drop_database"
+    - "delete_persistent_volume"
+    - "modify_production_firewall"
+    - "drain_all_clusters"
+    - "format_disk"
