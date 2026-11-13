@@ -514,7 +514,7 @@ def get_settings():
 def update_settings(payload: SettingsUpdateRequest):
     return {
         "status": "updated",
-        "settings": payload.dict()
+        "settings": payload.model_dump()
     }
 
 @app.post("/api/evaluate")
