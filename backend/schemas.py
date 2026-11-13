@@ -108,3 +108,58 @@ class RCAResult(BaseModel):
     propagation_path: List[str]
     counterfactual: CounterfactualResult
     computed_at: str
+
+# Stage C Schemas: Evidence, Confidence, Policy & Security
+class ClaimItem(BaseModel):
+    type: str  # Deploy, Metric, Log, Trace, Commit, Assertion
+    source: str
+    claim: str
+
+class ClaimVerification(BaseModel):
+    claim: ClaimItem
+    status: str  # VERIFIED, CONFLICTS, UNVERIFIED
+    role: str  # Supports, Conflicts, Dropped
+    evidence_reference: Optional[str] = None
+    reason: str
+
+class VerificationReport(BaseModel):
+    total_claims: int
+    verified_count: int
+    conflicting_count: int
+    dropped_count: int
+    claims: List[ClaimVerification]
+    dropped_claims: List[ClaimVerification]
+    evidence_coverage_pct: float
+
+class ConfidenceReport(BaseModel):
+    diagnostic_confidence_pct: float
+    evidence_coverage_pct: float
+    data_quality_pct: float
+    conflict_penalty_pct: float
+    supporting_evidence_count: int
+    conflicting_evidence_count: int
+    blocks_l2: bool
+    rule_breakdown: List[str]
+
+class PolicyCheckItem(BaseModel):
+    name: str
+    description: str
+    passed: bool
+    status: str  # PASS, FAIL, PENDING_APPROVAL
+
+class PolicyDecision(BaseModel):
+    policy_level: str  # L1, L2, DENIED
+    action: str
+    target_service: str
+    all_preconditions_met: bool
+    allowed_for_execution: bool
+    status_text: str
+    checks: List[PolicyCheckItem]
+    summary: str
+
+class SanitizedText(BaseModel):
+    original_text: str
+    sanitized_text: str
+    injection_detected: bool
+    quarantined_tokens: List[str]
+    flag_reason: Optional[str] = None
