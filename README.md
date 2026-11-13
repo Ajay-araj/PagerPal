@@ -3,6 +3,8 @@
 > **Evidence-Driven, Safety-Controlled Autonomous Incident Response Platform**  
 > *One-line pitch:* "PagerPal turns a 30-minute, 3 a.m. scramble into a 2-minute, evidence-backed approve-and-resolve."
 
+> 🌐 **Live Demo:** [https://pagerpal.vercel.app](https://pagerpal.vercel.app/)
+
 PagerPal transforms incident management from manual playback into a multi-agent system powered by LangGraph, Claude structured outputs, NetworkX causal inference, and strict Python policy guardrails.
 
 ---
@@ -46,8 +48,8 @@ PagerPal transforms incident management from manual playback into a multi-agent 
 
 Complete deployment configurations and step-by-step guides are documented in [DEPLOYMENT.md](DEPLOYMENT.md).
 
+- **Frontend (Vercel — Live):** 🌐 [https://pagerpal.vercel.app](https://pagerpal.vercel.app/) — `frontend/vercel.json` pre-configured with Vite framework build settings and SPA URL rewrites.
 - **Backend (Render):** `render.yaml` pre-configured with Python 3, Uvicorn start command, health checks (`/health`), and optional persistent SQLite storage.
-- **Frontend (Vercel):** `frontend/vercel.json` pre-configured with Vite framework build settings and SPA URL rewrites.
 
 ---
 
@@ -111,5 +113,7 @@ Results are saved to `eval_results/eval_results.csv` and `eval_results/eval_summ
 ---
 
 ## Live Demo Walkthrough
+
+🌐 **Live Application:** [https://pagerpal.vercel.app](https://pagerpal.vercel.app/)
 
 See [DEMO.md](DEMO.md) for the complete 5-minute live demonstration script.
