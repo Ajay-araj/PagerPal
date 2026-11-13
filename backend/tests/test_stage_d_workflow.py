@@ -140,8 +140,8 @@ def test_approve_flow_resolves_and_verifies_recovery():
     assert "Incident Postmortem" in final_state["postmortem_markdown"]
     assert final_state["comms_update"]["current_status"] == "Resolved"
 
-    # Emoji-free check
-    for emoji in ["🚨", "⚠️", "✅", "❌", "🛑", "🔍", "📊", "⚡"]:
+    # Emoji-free check (using unicode escape literals to avoid raw emojis in source)
+    for emoji in ["\U0001F6A8", "\u26A0\uFE0F", "\u2705", "\u274C", "\U0001F6D1", "\U0001F50D", "\U0001F4CA", "\u26A1"]:
         assert emoji not in final_state["comms_update"]["headline"]
         assert emoji not in final_state["comms_update"]["summary"]
 
@@ -316,15 +316,15 @@ def test_external_integrations_retry_and_mock_fallback():
     assert "[MOCK_GITHUB_COMMIT]" in commits[0]["message"]
 
     # Notifier fallback
-    ok, notif_audit = notifier.send_notification("INC-TEST", "payments", "Resolved", "Metrics nominal 🚀 ⚠️")
+    ok, notif_audit = notifier.send_notification("INC-TEST", "payments", "Resolved", "Metrics nominal \U0001F680 \u26A0\uFE0F")
     assert ok is True
     assert "Notification fallback:" in notif_audit
 
     # Test emoji stripping
-    stripped = notifier._strip_emojis("Alert: High Latency 🚨 on payments ⚠️! Status: ✅")
-    assert "🚨" not in stripped
-    assert "⚠️" not in stripped
-    assert "✅" not in stripped
+    stripped = notifier._strip_emojis("Alert: High Latency \U0001F6A8 on payments \u26A0\uFE0F! Status: \u2705")
+    assert "\U0001F6A8" not in stripped
+    assert "\u26A0" not in stripped
+    assert "\u2705" not in stripped
 
 
 def test_monotonic_utc_timestamps():

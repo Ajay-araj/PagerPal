@@ -2,20 +2,20 @@ import React from 'react';
 import { Zap, AlertTriangle, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 const SEVB = {
-  Critical: ['red', '▲'],
-  High: ['amb', '◆'],
-  Medium: ['cy', '●'],
-  Low: ['mu', '○']
+  Critical: ['red', ''],
+  High: ['amb', ''],
+  Medium: ['cy', ''],
+  Low: ['mu', '']
 };
 
 const STB = {
-  Resolved: ['grn', '✓'],
-  Investigating: ['amb', '◔'],
-  'Awaiting approval': ['amb', '❚❚'],
-  Remediating: ['cy', '▶'],
-  'Verifying recovery': ['cy', '◎'],
-  Escalated: ['red', '✕'],
-  Stopped: ['red', '■']
+  Resolved: ['grn', ''],
+  Investigating: ['amb', ''],
+  'Awaiting approval': ['amb', 'PAUSED'],
+  Remediating: ['cy', ''],
+  'Verifying recovery': ['cy', ''],
+  Escalated: ['red', ''],
+  Stopped: ['red', '']
 };
 
 export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) {
@@ -80,7 +80,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
         </div>
         <div>
           <b>{d.mttr}</b>
-          <span>MTTR · sample data</span>
+          <span>MTTR · simulated estimate</span>
         </div>
       </div>
 
@@ -135,7 +135,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
               <div key={svc.id} className="svc">
                 <span className="mono">{svc.name}</span>
                 <span className={`b ${svc.color}`}>
-                  {svc.color === 'grn' ? '✓' : svc.color === 'red' ? '▲' : '◆'} {svc.status}
+                  {svc.color === 'grn' ? '' : svc.color === 'red' ? '' : ''} {svc.status}
                 </span>
               </div>
             ))}
@@ -161,7 +161,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy }) 
               </thead>
               <tbody>
                 {d.recent_incidents && d.recent_incidents.map((r) => {
-                  const sevConf = SEVB[r.severity] || ['mu', '○'];
+                  const sevConf = SEVB[r.severity] || ['mu', ''];
                   const stConf = STB[r.status] || ['mu', '•'];
                   return (
                     <tr

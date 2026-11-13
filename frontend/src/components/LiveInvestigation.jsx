@@ -2,13 +2,13 @@ import React from 'react';
 import { Zap, Clock, ShieldAlert, ArrowRight, CheckCircle2, AlertOctagon } from 'lucide-react';
 
 const STB = {
-  Resolved: ['grn', '✓'],
-  Investigating: ['amb', '◔'],
-  'Awaiting approval': ['amb', '❚❚'],
-  Remediating: ['cy', '▶'],
-  'Verifying recovery': ['cy', '◎'],
-  Escalated: ['red', '✕'],
-  Stopped: ['red', '■']
+  Resolved: ['grn', ''],
+  Investigating: ['amb', ''],
+  'Awaiting approval': ['amb', 'PAUSED'],
+  Remediating: ['cy', ''],
+  'Verifying recovery': ['cy', ''],
+  Escalated: ['red', ''],
+  Stopped: ['red', '']
 };
 
 const STAGE_LABELS = {
@@ -99,7 +99,7 @@ export function LiveInvestigation({ simData, onOpenChaos, onOpenApproval }) {
             return (
               <div key={stg.agent} className={`stg ${stg.status}`}>
                 <i>
-                  {isCompleted ? '✓' : isFailed ? '✕' : isReview ? '!' : i + 1}
+                  {isCompleted ? '' : isFailed ? '' : isReview ? '!' : i + 1}
                 </i>
                 <h3>{stg.agent}</h3>
                 <span className={`b ${badgeColor}`}>

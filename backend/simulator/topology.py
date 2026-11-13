@@ -100,7 +100,7 @@ class ServiceTopology:
                     "display": meta["display"],
                     "status": "Healthy",
                     "color": "grn",
-                    "badge": "✓ Healthy",
+                    "badge": "Healthy",
                     "is_root": False
                 }
             return health_map
@@ -110,11 +110,11 @@ class ServiceTopology:
 
         for node_id, meta in services.items():
             if node_id == root_c:
-                status, color, badge, is_root = "Failing", "red", "▲ Failing", True
+                status, color, badge, is_root = "Failing", "red", "Failing", True
             elif node_id in path or node_id == "checkout":
-                status, color, badge, is_root = "Degraded", "amb", "◆ Degraded", False
+                status, color, badge, is_root = "Degraded", "amb", "Degraded", False
             else:
-                status, color, badge, is_root = "Healthy", "grn", "✓ Healthy", False
+                status, color, badge, is_root = "Healthy", "grn", "Healthy", False
 
             health_map[node_id] = {
                 "id": node_id,

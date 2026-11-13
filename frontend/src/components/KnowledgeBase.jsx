@@ -90,10 +90,10 @@ export function KnowledgeBase({ items }) {
                     <td>{item.root_cause}</td>
                     <td style={{ color: 'var(--cy)' }}><b>{item.fix}</b></td>
                     <td>
-                      <span className="b grn">✓ {item.approval_status}</span>
+                      <span className="b grn"> {item.approval_status}</span>
                     </td>
                     <td>
-                      <span className="b grn">✓ {item.recovery_status}</span>
+                      <span className="b grn"> {item.recovery_status}</span>
                     </td>
                   </tr>
                 ))}

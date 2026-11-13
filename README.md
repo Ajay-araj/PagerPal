@@ -7,7 +7,7 @@ PagerPal is a simulated, AI-powered incident-response platform built to turn slo
 
 ---
 
-## ⚡ Core Features & Non-Negotiable Boundaries
+##  Core Features & Non-Negotiable Boundaries
 
 - **Simulated Monitoring Data:** Clearly labeled as `SIMULATION`. No production infrastructure is touched.
 - **7-Stage Multi-Agent Workflow:**
@@ -25,7 +25,7 @@ PagerPal is a simulated, AI-powered incident-response platform built to turn slo
 
 ---
 
-## 🏗️ Architecture & Technology Stack
+##  Architecture & Technology Stack
 
 | Area | Technology | Responsibility |
 | :--- | :--- | :--- |
@@ -38,7 +38,7 @@ PagerPal is a simulated, AI-powered incident-response platform built to turn slo
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Run Everything (Backend + Built React Frontend)
 
@@ -71,7 +71,7 @@ Open **[http://localhost:5173](http://localhost:5173)** in your browser. All API
 
 ---
 
-## 🧪 Running the Test Suite
+##  Running the Test Suite
 
 Run the full pytest suite to verify policy enforcement, approval gates, recovery verification, and API endpoints:
 
@@ -95,13 +95,13 @@ All 12 unit and integration tests pass:
 
 ---
 
-## 🎯 5-Minute Live Demo Walkthrough
+##  5-Minute Live Demo Walkthrough
 
 1. **Overview Dashboard:**
    - Observe KPI cards (Active incidents, Critical alerts, Affected services, MTTR)
    - Review the incident trend chart and service health matrix
 2. **Inject Chaos Scenario (Chaos Mode):**
-   - Click **⚡ Start Chaos Mode** in the top navigation or overview
+   - Click ** Start Chaos Mode** in the top navigation or overview
    - Select **Faulty deployment** (payments-svc) and confirm
 3. **Live Multi-Agent Investigation:**
    - Navigate to **Live investigation**

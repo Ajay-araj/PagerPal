@@ -5,20 +5,20 @@ import {
 } from 'lucide-react';
 
 const SEVB = {
-  Critical: ['red', '▲'],
-  High: ['amb', '◆'],
-  Medium: ['cy', '●'],
-  Low: ['mu', '○']
+  Critical: ['red', ''],
+  High: ['amb', ''],
+  Medium: ['cy', ''],
+  Low: ['mu', '']
 };
 
 const STB = {
-  Resolved: ['grn', '✓'],
-  Investigating: ['amb', '◔'],
-  'Awaiting approval': ['amb', '❚❚'],
-  Remediating: ['cy', '▶'],
-  'Verifying recovery': ['cy', '◎'],
-  Escalated: ['red', '✕'],
-  Stopped: ['red', '■']
+  Resolved: ['grn', ''],
+  Investigating: ['amb', ''],
+  'Awaiting approval': ['amb', 'PAUSED'],
+  Remediating: ['cy', ''],
+  'Verifying recovery': ['cy', ''],
+  Escalated: ['red', ''],
+  Stopped: ['red', '']
 };
 
 export function IncidentDetail({ 
@@ -45,7 +45,7 @@ export function IncidentDetail({
   const isExecuting = ['executing', 'verifying'].includes(inc.phase);
   const isResolved = inc.phase === 'resolved';
 
-  const sevConf = SEVB[inc.severity] || ['mu', '○'];
+  const sevConf = SEVB[inc.severity] || ['mu', ''];
   const stConf = STB[inc.status] || ['mu', '•'];
 
   const policyChecks = proposal && proposal.policy_checks ? proposal.policy_checks : [
@@ -145,7 +145,7 @@ export function IncidentDetail({
                 </span>
               </p>
               <span className={`b ${isResolved || isExecuting ? 'grn' : 'amb'}`}>
-                {isResolved || isExecuting ? '✓ Verified by evidence' : '◔ Suspected'}
+                {isResolved || isExecuting ? ' Verified by evidence' : ' Suspected'}
               </span>
 
               <h2 style={{ margin: '22px 0 6px' }}>Rule-based confidence report</h2>
@@ -200,9 +200,9 @@ export function IncidentDetail({
                     <td>{ev.claim}</td>
                     <td>
                       {ev.role === 'Supports' ? (
-                        <span className="b grn">✓ Supports</span>
+                        <span className="b grn"> Supports</span>
                       ) : (
-                        <span className="b amb">◆ Conflicts</span>
+                        <span className="b amb"> Conflicts</span>
                       )}
                     </td>
                   </tr>
@@ -228,8 +228,8 @@ export function IncidentDetail({
                 {sc.fix}
               </p>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
-                <span className="b cy">● Risk: {sc.risk_level || 'Low'}</span>
-                <span className="b grn">✓ Reversible</span>
+                <span className="b cy"> Risk: {sc.risk_level || 'Low'}</span>
+                <span className="b grn"> Reversible</span>
                 <span className="b mu">⏱ Timeout: {sc.timeout_seconds || 120}s</span>
               </div>
               <p>
@@ -283,9 +283,9 @@ export function IncidentDetail({
                 {policyChecks.map((ch, idx) => (
                   <li key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     {ch.passed ? (
-                      <span style={{ color: 'var(--grn)' }}>✓</span>
+                      <span style={{ color: 'var(--grn)' }}></span>
                     ) : (
-                      <span style={{ color: 'var(--amb)' }}>◔</span>
+                      <span style={{ color: 'var(--amb)' }}></span>
                     )}
                     <span>
                       <b>{ch.name}:</b> {ch.description}
@@ -331,9 +331,9 @@ export function IncidentDetail({
                 {sc.verification_checks.map((chk, i) => (
                   <li key={i} style={{ padding: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {isResolved ? (
-                      <span className="b grn" style={{ padding: '1px 6px', fontSize: '11px' }}>✓ PASS</span>
+                      <span className="b grn" style={{ padding: '1px 6px', fontSize: '11px' }}> PASS</span>
                     ) : (
-                      <span className="b cy" style={{ padding: '1px 6px', fontSize: '11px' }}>◎ CHECKING</span>
+                      <span className="b cy" style={{ padding: '1px 6px', fontSize: '11px' }}> CHECKING</span>
                     )}
                     <span>{chk}</span>
                   </li>
@@ -343,11 +343,11 @@ export function IncidentDetail({
               <div style={{ marginTop: '16px' }}>
                 {isResolved ? (
                   <span className="b grn" style={{ padding: '6px 14px', fontSize: '13px' }}>
-                    ✓ Recovery verified across 4 of 4 checks
+                     Recovery verified across 4 of 4 checks
                   </span>
                 ) : (
                   <span className="b cy" style={{ padding: '6px 14px', fontSize: '13px' }}>
-                    ◎ Verifying health probes. Successful command alone is not proof of recovery.
+                     Verifying health probes. Successful command alone is not proof of recovery.
                   </span>
                 )}
               </div>

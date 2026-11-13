@@ -190,15 +190,15 @@ export function ServiceMap({ graphData, activeSim }) {
           <h2>Map legend</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
             <div>
-              <span className="b grn" style={{ marginRight: '8px' }}>✓ Healthy</span>
+              <span className="b grn" style={{ marginRight: '8px' }}> Healthy</span>
               Normal latency SLI and 0% error rate
             </div>
             <div>
-              <span className="b amb" style={{ marginRight: '8px' }}>◆ Degraded</span>
+              <span className="b amb" style={{ marginRight: '8px' }}> Degraded</span>
               Cascaded latency impact or queueing
             </div>
             <div>
-              <span className="b red" style={{ marginRight: '8px' }}>▲ Failing</span>
+              <span className="b red" style={{ marginRight: '8px' }}> Failing</span>
               Primary origin / root-cause component
             </div>
             <div style={{ color: 'var(--mu)', marginTop: '4px' }}>

@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { Search, Zap } from 'lucide-react';
 
 const SEVB = {
-  Critical: ['red', '▲'],
-  High: ['amb', '◆'],
-  Medium: ['cy', '●'],
-  Low: ['mu', '○']
+  Critical: ['red', ''],
+  High: ['amb', ''],
+  Medium: ['cy', ''],
+  Low: ['mu', '']
 };
 
 const STB = {
-  Resolved: ['grn', '✓'],
-  Investigating: ['amb', '◔'],
-  'Awaiting approval': ['amb', '❚❚'],
-  Remediating: ['cy', '▶'],
-  'Verifying recovery': ['cy', '◎'],
-  Escalated: ['red', '✕'],
-  Stopped: ['red', '■']
+  Resolved: ['grn', ''],
+  Investigating: ['amb', ''],
+  'Awaiting approval': ['amb', 'PAUSED'],
+  Remediating: ['cy', ''],
+  'Verifying recovery': ['cy', ''],
+  Escalated: ['red', ''],
+  Stopped: ['red', '']
 };
 
 export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
@@ -122,7 +122,7 @@ export function IncidentsList({ incidents, onOpenIncident, onOpenChaos }) {
               </thead>
               <tbody>
                 {filtered.map((r) => {
-                  const sevConf = SEVB[r.severity] || ['mu', '○'];
+                  const sevConf = SEVB[r.severity] || ['mu', ''];
                   const stConf = STB[r.status] || ['mu', '•'];
                   return (
                     <tr

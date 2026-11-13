@@ -135,7 +135,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.top1_accuracy.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Top-3 root-cause accuracy</b></td>
@@ -143,7 +143,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.top3_accuracy.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Successful remediation with verified recovery</b></td>
@@ -151,7 +151,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.remediation_verified.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Human approval enforced before remediation</b></td>
@@ -159,7 +159,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.human_approval.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Recovery verification after every remediation</b></td>
@@ -167,7 +167,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.recovery_verification.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                   <tr>
                     <td><b>Postmortem generated for completed incidents</b></td>
@@ -175,7 +175,7 @@ export function Settings({ onToast }) {
                     <td className="mono" style={{ color: 'var(--grn)' }}>
                       <b>{evalResults.target_comparison.postmortems.actual}</b>
                     </td>
-                    <td><span className="b grn">✓ MET</span></td>
+                    <td><span className="b grn"> MET</span></td>
                   </tr>
                 </tbody>
               </table>

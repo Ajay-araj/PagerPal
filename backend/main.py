@@ -58,11 +58,47 @@ def get_dashboard():
     conn = get_connection()
     c = conn.cursor()
 
-    # Active incidents count
-    active_incidents = 1 if is_busy else 0
-    critical_alerts = 5 if is_busy else 0
-    services_affected = 3 if is_busy else 0
-    mttr_display = "6m 40s (sample)"
+    # 1. Real active incidents count from SQLite
+    c.execute("SELECT COUNT(*) FROM incidents WHERE status != 'Resolved'")
+    db_active = c.fetchone()[0]
+    active_incidents = max(db_active, 1 if is_busy else 0)
+
+    # 2. Real critical alerts count
+    c.execute("SELECT COUNT(*) FROM alerts WHERE severity IN ('Critical', 'High')")
+    critical_alerts = c.fetchone()[0]
+    if is_busy and critical_alerts == 0:
+        critical_alerts = len(sim_status["sim"].get("alerts", []))
+
+    # 3. Real services affected count
+    c.execute("SELECT COUNT(DISTINCT service) FROM incidents WHERE status != 'Resolved'")
+    services_affected = c.fetchone()[0]
+    if is_busy and services_affected == 0:
+        services_affected = 1
+
+    # 4. Real MTTR computed from resolved incidents in SQLite (labelled as simulated estimate)
+    c.execute("SELECT detected_at, resolved_at FROM incidents WHERE status = 'Resolved' AND resolved_at IS NOT NULL")
+    resolved_rows = c.fetchall()
+    durations = []
+    for r in resolved_rows:
+        try:
+            d_str = r["detected_at"]
+            r_str = r["resolved_at"]
+            if d_str and r_str:
+                d_dt = datetime.fromisoformat(d_str) if "T" in d_str else datetime.strptime(d_str[:16], "%Y-%m-%d %H:%M")
+                r_dt = datetime.fromisoformat(r_str) if "T" in r_str else datetime.strptime(r_str[:16], "%Y-%m-%d %H:%M")
+                dur = (r_dt - d_dt).total_seconds()
+                if dur > 0:
+                    durations.append(dur)
+        except Exception:
+            pass
+
+    if durations:
+        avg_sec = sum(durations) / len(durations)
+        m = int(avg_sec // 60)
+        s = int(avg_sec % 60)
+        mttr_display = f"{m}m {s}s (simulated estimate)"
+    else:
+        mttr_display = "2m 15s (simulated estimate)"
 
     # Service health
     active_svc = sim_status["sim"]["scenario"]["svc"] if is_busy else None
@@ -101,18 +137,31 @@ def get_dashboard():
             {"t": "00:00", "a": "System", "m": "All systems nominal. Ready to start Chaos Mode.", "c": "grn"}
         ]
 
-    # Daily incident trend
-    c.execute("SELECT COUNT(*) FROM incidents")
-    total_count = c.fetchone()[0]
-    trend_data = [
-        {"day": "Fri", "count": 3},
-        {"day": "Sat", "count": 5},
-        {"day": "Sun", "count": 2},
-        {"day": "Mon", "count": 6},
-        {"day": "Tue", "count": 4},
-        {"day": "Wed", "count": 3},
-        {"day": "Today", "count": max(1, total_count - 2)}
-    ]
+    # 5. Real daily incident trend grouped from SQLite
+    c.execute("""
+        SELECT substr(detected_at, 1, 10) as dt, COUNT(*) as cnt
+        FROM incidents
+        GROUP BY substr(detected_at, 1, 10)
+        ORDER BY dt DESC
+        LIMIT 7
+    """)
+    trend_rows = c.fetchall()
+    trend_data = []
+    if trend_rows:
+        for tr in reversed(trend_rows):
+            dt_str = tr["dt"]
+            try:
+                dt_obj = datetime.strptime(dt_str, "%Y-%m-%d")
+                day_name = dt_obj.strftime("%a")
+            except Exception:
+                day_name = dt_str[-5:]
+            trend_data.append({"day": day_name, "count": tr["cnt"]})
+    else:
+        trend_data = [
+            {"day": "Mon", "count": 1},
+            {"day": "Tue", "count": 2},
+            {"day": "Today", "count": 1}
+        ]
 
     conn.close()
 

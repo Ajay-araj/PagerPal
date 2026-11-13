@@ -6,6 +6,7 @@ Enforces zero emojis in all outgoing messages and records audit logs.
 """
 import os
 import time
+import re
 import httpx
 from typing import Dict, Any, Tuple
 
@@ -59,10 +60,11 @@ class IncidentNotifier:
 
     def _strip_emojis(self, text: str) -> str:
         """Removes unicode emojis and common emoji shortcodes."""
-        # Clean common incident emojis: 🚨, ⚠️, ✅, ❌, 🛑, 🔍, 📊, ⚡
-        for ch in ["🚨", "⚠️", "✅", "❌", "🛑", "🔍", "📊", "⚡", "🔥", "🚀"]:
-            text = text.replace(ch, "")
-        return text.strip()
+        # Strip high-surrogate emojis and specific unicode symbols
+        cleaned = re.sub(r"[\U00010000-\U0010ffff]", "", text)
+        for code in ["\u26a0", "\u2705", "\u274c", "\u26a1", "\u2728", "\ufe0f"]:
+            cleaned = cleaned.replace(code, "")
+        return cleaned.strip()
 
 
 # Global singleton
