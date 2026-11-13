@@ -78,3 +78,4 @@
   - Point out newly archived incident.
   - Demonstrate `/api/kb/similar?service=payments`: past fixes are returned strictly as informational suggestions for human review (Hard Rule 8: never auto-applied).
 - Check outgoing webhook dispatch: completely clean of raw emojis.
+

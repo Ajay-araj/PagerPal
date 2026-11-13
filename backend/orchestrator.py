@@ -14,7 +14,7 @@ from typing import Dict, Any, List, Optional
 
 from backend.database import get_connection
 from backend.scenarios import SCENARIOS
-from backend.graph.workflow import incident_workflow, IncidentState
+from backend.graph.workflow import incident_workflow, IncidentState, SCENARIO_FAULT_MAP
 from backend.policy.engine import PolicyEngine
 from backend.executor.remediation import remediation_executor
 from backend.recovery.verify import RecoveryVerifier
@@ -95,34 +95,35 @@ class SimulationOrchestrator:
 
     async def start_scenario(self, scenario_id: str) -> Dict[str, Any]:
         async with self.lock:
-            if self.active_sim and self.active_sim["phase"] in ["running", "await", "executing", "verifying"]:
-                raise ValueError("A simulation is already active. Please wait or stop the current simulation.")
+            # If a simulation was already running, cancel the previous background task cleanly
+            if self.step_task and not self.step_task.done():
+                self.step_task.cancel()
 
             if scenario_id not in SCENARIOS:
                 raise ValueError(f"Unknown scenario ID: {scenario_id}")
 
             sc = SCENARIOS[scenario_id]
 
-            # Generate next monotonic incident ID
+            # Generate next monotonic incident ID by finding max numeric suffix
             conn = get_connection()
             c = conn.cursor()
-            c.execute("SELECT id FROM incidents ORDER BY rowid DESC LIMIT 1")
-            last_row = c.fetchone()
-            if last_row and last_row[0].startswith("INC-"):
+            c.execute("SELECT id FROM incidents WHERE id LIKE 'INC-%'")
+            max_num = 2040
+            for row in c.fetchall():
                 try:
-                    num = int(last_row[0].split("-")[1]) + 1
-                except:
-                    num = 2041
-            else:
-                num = 2041
+                    n = int(row["id"].split("-")[1])
+                    if n > max_num:
+                        max_num = n
+                except (ValueError, IndexError):
+                    pass
 
-            inc_id = f"INC-{num}"
+            inc_id = f"INC-{max_num + 1}"
             now_iso = datetime.now(timezone.utc).isoformat()
             detected_str = "Today " + datetime.now().strftime("%H:%M")
 
-            # Persist initial incident record
+            # Persist initial incident record (using INSERT OR REPLACE to prevent any primary key collision)
             conn.execute("""
-                INSERT INTO incidents (id, title, scenario_id, service, severity, status, phase, detected_at, impact_summary, orders_at_risk, checkout_success_pct, active_agent, created_at)
+                INSERT OR REPLACE INTO incidents (id, title, scenario_id, service, severity, status, phase, detected_at, impact_summary, orders_at_risk, checkout_success_pct, active_agent, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (inc_id, sc["name"], sc["id"], sc["svc"], sc["sev"], "Investigating", "running", detected_str, sc["sym"], sc["orders_at_risk"], sc["success_rate"], "Supervisor", now_iso))
             conn.commit()
@@ -149,8 +150,6 @@ class SimulationOrchestrator:
             }
 
             # Launch background LangGraph execution
-            if self.step_task and not self.step_task.done():
-                self.step_task.cancel()
             self.step_task = asyncio.create_task(self._run_workflow_execution(inc_id, scenario_id, sc, t0))
 
             return self.get_status()
@@ -158,10 +157,11 @@ class SimulationOrchestrator:
     async def _run_workflow_execution(self, inc_id: str, scenario_id: str, sc: Dict[str, Any], t0: float):
         """Drives the LangGraph execution in background."""
         try:
+            fault_key = SCENARIO_FAULT_MAP.get(scenario_id, sc.get("fault_type", "faulty_deployment"))
             initial_state: IncidentState = {
                 "incident_id": inc_id,
                 "scenario_id": scenario_id,
-                "fault_type": sc.get("fault_type", "faulty_deployment"),
+                "fault_type": fault_key,
                 "target_service": sc["svc"],
                 "seed": 42,
                 "t0": t0,
