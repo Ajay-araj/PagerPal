@@ -71,3 +71,40 @@ class SimulationRun(BaseModel):
     alerts: List[SimulatedAlert] = Field(default_factory=list)
     ground_truth: GroundTruth
 
+# Stage B Schemas: Correlation & RCA
+class CorrelationResult(BaseModel):
+    incident_id: str
+    incident_title: str
+    severity: str
+    primary_service: str
+    alerts: List[SimulatedAlert]
+    total_alerts_received: int
+    dedup_count: int
+    services_involved: List[str]
+    timespan_seconds: float
+    correlation_reason: str
+
+class RCACandidate(BaseModel):
+    service_id: str
+    service_name: str
+    rank: int
+    score: float
+    confidence_pct: float
+    likely_cause: str
+    propagation_path: List[str]
+    evidence_signals: List[str]
+
+class CounterfactualResult(BaseModel):
+    candidate_service: str
+    hypothesized_action: str
+    supports_hypothesis: bool
+    is_proof: bool = False  # Strictly False: simulation is supporting evidence, not mathematical proof
+    metric_deltas: Dict[str, Dict[str, Any]]
+    explanation: str
+
+class RCAResult(BaseModel):
+    top_candidates: List[RCACandidate]
+    primary_root_cause: RCACandidate
+    propagation_path: List[str]
+    counterfactual: CounterfactualResult
+    computed_at: str
