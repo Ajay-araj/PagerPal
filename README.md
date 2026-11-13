@@ -1,4 +1,4 @@
-# PagerPal - Incident Response Console
+# PagerPal ---- Incident Response Console
 
 > **Evidence-Driven, Safety-Controlled Autonomous Incident Response Platform**  
 > *One-line pitch:* "PagerPal turns a 30-minute, 3 a.m. scramble into a 2-minute, evidence-backed approve-and-resolve."
