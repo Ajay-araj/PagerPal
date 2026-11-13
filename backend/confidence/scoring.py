@@ -67,3 +67,4 @@ class ConfidenceScorer:
         )
 
 confidence_scorer = ConfidenceScorer()
+

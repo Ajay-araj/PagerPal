@@ -131,6 +131,11 @@ class VerificationReport(BaseModel):
     dropped_claims: List[ClaimVerification]
     evidence_coverage_pct: float
 
+    @property
+    def verified_claims(self) -> "List[ClaimVerification]":
+        """Alias for claims (the verified subset)."""
+        return self.claims
+
 class ConfidenceReport(BaseModel):
     diagnostic_confidence_pct: float
     evidence_coverage_pct: float
@@ -156,6 +161,7 @@ class PolicyDecision(BaseModel):
     status_text: str
     checks: List[PolicyCheckItem]
     summary: str
+    denial_reasons: List[str] = []
 
 class SanitizedText(BaseModel):
     original_text: str

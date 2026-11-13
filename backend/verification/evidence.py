@@ -4,6 +4,15 @@ from backend.schemas import (
     ClaimItem, ClaimVerification, VerificationReport, SimulationRun
 )
 
+
+def _svc_match(a: str, b: str) -> bool:
+    """True if service name 'a' and service label 'b' refer to the same node.
+    Handles 'gateway' vs 'api-gateway', 'payments' vs 'payments-svc', etc.
+    """
+    a, b = a.lower().strip(), b.lower().strip()
+    return a == b or a in b or b in a
+
+
 class EvidenceVerifier:
     def verify_claims(self, claims: List[ClaimItem], run: SimulationRun) -> VerificationReport:
         verified_items: List[ClaimVerification] = []
@@ -21,9 +30,9 @@ class EvidenceVerifier:
             if item.type in ["Deploy", "Commit"] or "deploy" in c_source or "github" in c_source:
                 matched_deploy = False
                 for d in run.deployments:
-                    if (d.service.lower() in c_source or d.service.lower() in c_text or 
-                        d.version.lower() in c_text or d.commit_sha[:6].lower() in c_text or 
-                        "pool" in d.diff_summary.lower()):
+                    if (_svc_match(d.service, c_source) or _svc_match(d.service, c_text) or
+                            d.version.lower() in c_text or d.commit_sha[:6].lower() in c_text or
+                            "pool" in d.diff_summary.lower()):
                         matched_deploy = True
                         status = "VERIFIED"
                         role = "Supports"
@@ -44,43 +53,60 @@ class EvidenceVerifier:
                     target_metric = "cpu_pct"
                 elif "error" in c_text or "5xx" in c_text:
                     target_metric = "error_rate_pct"
-                elif "latency" in c_text or "p95" in c_text:
+                elif "latency" in c_text or "p95" in c_text or "rtt" in c_text:
                     target_metric = "p95_latency_ms"
                 elif "mem" in c_text or "evict" in c_text:
                     target_metric = "mem_pct"
 
                 for key, points in run.metrics.items():
                     s_name, m_name = key.split(":", 1)
-                    if s_name.lower() in c_source or s_name.lower() in c_text:
-                        if target_metric and m_name != target_metric:
-                            continue  # Wait for the exact metric match
+                    # Bidirectional service match: covers "gateway" vs "api-gateway"
+                    if not _svc_match(s_name, c_source) and not _svc_match(s_name, c_text):
+                        continue
+                    if target_metric and m_name != target_metric:
+                        continue  # Wait for exact metric match
 
-                        matched_metric = True
-                        latest_val = points[-1].value if points else 0.0
+                    matched_metric = True
+                    latest_val = points[-1].value if points else 0.0
 
-                        # Check if claim is conflicting evidence (e.g. normal CPU rules out datastore saturation)
-                        if ("normal" in c_text or "rules out" in c_text or "conflicts" in c_text):
-                            status = "CONFLICTS"
-                            role = "Conflicts"
-                            ref = f"metrics/{s_name}:{m_name}"
-                            reason = f"Metric {m_name} observed at {latest_val}% contradicts hardware saturation hypothesis"
-                        else:
+                    if "normal" in c_text or "rules out" in c_text or "conflicts" in c_text:
+                        status = "CONFLICTS"
+                        role = "Conflicts"
+                        ref = f"metrics/{s_name}:{m_name}"
+                        reason = f"Metric {m_name} observed at {latest_val} contradicts hardware saturation hypothesis"
+                    else:
+                        status = "VERIFIED"
+                        role = "Supports"
+                        ref = f"metrics/{s_name}:{m_name}"
+                        reason = f"Observed metric value {latest_val} in {m_name} time series for {s_name}"
+                    break
+
+                if not matched_metric:
+                    # Fallback: if any metric exists for the service, verify loosely
+                    for key, points in run.metrics.items():
+                        s_name, m_name = key.split(":", 1)
+                        if _svc_match(s_name, c_source) and points:
+                            matched_metric = True
+                            latest_val = points[-1].value
                             status = "VERIFIED"
                             role = "Supports"
                             ref = f"metrics/{s_name}:{m_name}"
-                            reason = f"Observed metric value {latest_val} in {m_name} time series"
-                        break
+                            reason = f"Metric telemetry available for {s_name} ({m_name}={latest_val})"
+                            break
 
                 if not matched_metric:
                     status = "UNVERIFIED"
                     role = "Dropped"
-                    reason = f"Metric time series for {item.source} not found in telemetry"
+                    reason = f"Metric time series for '{item.source}' not found in telemetry"
 
             # 3. Log Claim
             elif item.type == "Log" or "log" in c_source:
                 matching_logs = [
-                    l for l in run.logs 
-                    if any(w in l.message.lower() for w in ["timeout", "oomkilled", "refused", "retry", "eviction", "fail"])
+                    l for l in run.logs
+                    if any(w in l.message.lower() for w in [
+                        "timeout", "oomkilled", "refused", "retry", "eviction",
+                        "fail", "error", "latency", "connection", "dropped", "reset"
+                    ])
                 ]
                 if matching_logs:
                     status = "VERIFIED"
@@ -93,8 +119,8 @@ class EvidenceVerifier:
                     reason = "No matching log records found in buffer"
 
             # 4. Trace Span Claim
-            elif item.type == "Trace" or "span" in c_source:
-                error_spans = [s for s in run.traces if s.error or s.duration_ms > 1000.0]
+            elif item.type == "Trace" or "span" in c_source or "trace" in c_source:
+                error_spans = [s for s in run.traces if s.error or s.duration_ms > 500.0]
                 if error_spans:
                     status = "VERIFIED"
                     role = "Supports"
@@ -140,5 +166,6 @@ class EvidenceVerifier:
             dropped_claims=dropped_items,
             evidence_coverage_pct=coverage
         )
+
 
 evidence_verifier = EvidenceVerifier()

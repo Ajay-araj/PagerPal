@@ -152,3 +152,4 @@ def test_security_sanitizer_preserves_benign_logs():
     assert result.injection_detected is False
     assert result.sanitized_text == benign_log
     assert len(result.quarantined_tokens) == 0
+

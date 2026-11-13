@@ -90,3 +90,4 @@ def test_counterfactual_check_is_proof_false():
     assert "p95_latency_ms" in cf.metric_deltas
     assert "error_rate_pct" in cf.metric_deltas
     assert "is_proof=False" in cf.explanation
+

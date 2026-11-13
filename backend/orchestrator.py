@@ -1,14 +1,23 @@
+"""
+backend/orchestrator.py
+Production simulation orchestrator powered by LangGraph.
+Coordinates seedable fault simulation, causal RCA, evidence verification,
+policy engine enforcement, human approval interrupts, and independent recovery verification.
+Maintains backward compatibility with React frontend API endpoints and SQLite database.
+"""
 import asyncio
 import time
 import json
 import os
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
+
 from backend.database import get_connection
 from backend.scenarios import SCENARIOS
-from backend.graph import topology
-from backend.policy_engine import PolicyEngine
-from backend.recovery_verifier import RecoveryVerifier
+from backend.graph.workflow import incident_workflow, IncidentState
+from backend.policy.engine import PolicyEngine
+from backend.executor.remediation import remediation_executor
+from backend.recovery.verify import RecoveryVerifier
 
 AGENTS = [
     "Supervisor",
@@ -30,11 +39,15 @@ TASKS = [
     "Dispatch notifications and generate postmortem report"
 ]
 
+
 class SimulationOrchestrator:
+    """Orchestrates LangGraph incident response with state synchronization to SQLite."""
+
     def __init__(self):
         self.active_sim: Optional[Dict[str, Any]] = None
         self.lock = asyncio.Lock()
         self.step_task: Optional[asyncio.Task] = None
+        self.thread_config: Optional[Dict[str, Any]] = None
 
     def get_elapsed_str(self) -> str:
         if not self.active_sim:
@@ -53,7 +66,6 @@ class SimulationOrchestrator:
         }
         self.active_sim["log"].append(entry)
 
-        # Persist to DB
         try:
             conn = get_connection()
             conn.execute(
@@ -91,7 +103,7 @@ class SimulationOrchestrator:
 
             sc = SCENARIOS[scenario_id]
 
-            # Generate next incident ID
+            # Generate next monotonic incident ID
             conn = get_connection()
             c = conn.cursor()
             c.execute("SELECT id FROM incidents ORDER BY rowid DESC LIMIT 1")
@@ -103,35 +115,22 @@ class SimulationOrchestrator:
                     num = 2041
             else:
                 num = 2041
-            
+
             inc_id = f"INC-{num}"
             now_iso = datetime.now(timezone.utc).isoformat()
             detected_str = "Today " + datetime.now().strftime("%H:%M")
 
-            # Persist incident
+            # Persist initial incident record
             conn.execute("""
                 INSERT INTO incidents (id, title, scenario_id, service, severity, status, phase, detected_at, impact_summary, orders_at_risk, checkout_success_pct, active_agent, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (inc_id, sc["name"], sc["id"], sc["svc"], sc["sev"], "Investigating", "running", detected_str, sc["sym"], sc["orders_at_risk"], sc["success_rate"], "Supervisor", now_iso))
-
-            # Persist alerts
-            for a in sc["alerts"]:
-                conn.execute("""
-                    INSERT INTO alerts (id, incident_id, service, name, severity, condition, fired_at, correlation_reason)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (f"ALT-{int(time.time()*1000)%100000}-{a['service']}", inc_id, a["service"], a["name"], a["severity"], a["condition"], detected_str, sc["correlation_reason"]))
-
-            # Persist evidence
-            for ev in sc["evidence"]:
-                conn.execute("""
-                    INSERT INTO evidence (id, incident_id, type, source, claim, role, timestamp)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (f"EV-{int(time.time()*1000)%100000}-{ev['type']}", inc_id, ev["type"], ev["source"], ev["claim"], ev["role"], detected_str))
-
             conn.commit()
             conn.close()
 
-            # Initialize in-memory simulation state
+            # Initialize active simulation tracking
+            self.thread_config = {"configurable": {"thread_id": inc_id}}
+            t0 = time.time()
             self.active_sim = {
                 "id": inc_id,
                 "sc": sc,
@@ -140,125 +139,151 @@ class SimulationOrchestrator:
                 "ts": [""] * 7,
                 "log": [],
                 "audit": [],
-                "t0": time.time(),
+                "t0": t0,
                 "phase": "running",
                 "det": detected_str,
                 "orders_at_risk": sc["orders_at_risk"],
                 "success_rate": sc["success_rate"],
-                "policy": None
+                "policy": None,
+                "state": None
             }
 
-            self.log("Chaos Simulator", f"Injected '{sc['name']}' into {sc['svc_name']} (SIMULATION)", "amb")
-            self.log("Alert Correlation", f"{len(sc['alerts'])} alerts correlated: {sc['correlation_reason']}", "amb")
-            self.audit("Chaos Simulator", "Injected fault scenario", sc["name"])
-
-            # Start asynchronous step execution
+            # Launch background LangGraph execution
             if self.step_task and not self.step_task.done():
                 self.step_task.cancel()
-            self.step_task = asyncio.create_task(self._run_agent_pipeline())
+            self.step_task = asyncio.create_task(self._run_workflow_execution(inc_id, scenario_id, sc, t0))
 
             return self.get_status()
 
-    async def _run_agent_pipeline(self):
+    async def _run_workflow_execution(self, inc_id: str, scenario_id: str, sc: Dict[str, Any], t0: float):
+        """Drives the LangGraph execution in background."""
         try:
-            # Stage 0: Supervisor
-            await self._run_stage(0, "Workflow plan initialized: Triage -> Investigator -> Causal RCA -> Evidence Verifier -> Remediation -> Comms.")
-            await asyncio.sleep(1.0)
+            initial_state: IncidentState = {
+                "incident_id": inc_id,
+                "scenario_id": scenario_id,
+                "fault_type": sc.get("fault_type", "faulty_deployment"),
+                "target_service": sc["svc"],
+                "seed": 42,
+                "t0": t0,
+                "stage_statuses": ["waiting"] * 7,
+                "stage_results": [""] * 7,
+                "stage_timestamps": [""] * 7,
+                "logs": self.active_sim["log"],
+                "audit": self.active_sim["audit"],
+                "verifier_retry_count": 0,
+                "dropped_claims": [],
+                "claims": []
+            }
 
-            # Stage 1: Triage
-            sc = self.active_sim["sc"]
-            await self._run_stage(1, f"Severity: {sc['sev']}. Impact: ~{sc['orders_at_risk']} orders/min at risk. Checkout success: {sc['success_rate']}%.")
-            await asyncio.sleep(1.0)
-
-            # Stage 2: Investigator
-            await self._run_stage(2, f"Collected {len(sc['evidence'])} evidence points: logs, metrics, trace spans, and commit history.")
-            await asyncio.sleep(1.0)
-
-            # Stage 3: Causal RCA
-            prop_path = topology.find_propagation_path(sc["svc"], "checkout")
-            path_str = " -> ".join([topology.g.nodes[n]["name"] for n in prop_path])
-            await self._run_stage(3, f"Root cause hypothesis: {sc['cause']}. Causal propagation path: {path_str}.")
-            await asyncio.sleep(1.0)
-
-            # Stage 4: Evidence Verifier
-            supported = len([e for e in sc["evidence"] if e["role"] == "Supports"])
-            total = len(sc["evidence"])
-            await self._run_stage(4, f"{supported} of {total} claims verified. Unsupported claim dropped: '{sc['dropped_claim']}'. Diagnostic coverage: 83%.")
-            await asyncio.sleep(0.9)
-
-            # Stage 5: Remediation proposal & Policy Engine evaluation
-            policy_res = PolicyEngine.evaluate_remediation_proposal(
-                action=sc["fix"],
-                target_service=sc["svc"],
-                is_reversible=True,
-                evidence_coverage_pct=83.0,
-                has_human_approval=False
+            # Run LangGraph until interrupt (paused right before executor)
+            loop = asyncio.get_running_loop()
+            final_state = await loop.run_in_executor(
+                None,
+                lambda: incident_workflow.invoke(initial_state, config=self.thread_config)
             )
-            self.active_sim["policy"] = policy_res
-            self.active_sim["st"][5] = "review"
-            self.active_sim["phase"] = "await"
-            self.active_sim["ts"][5] = self.get_elapsed_str()
-            self.active_sim["res"][5] = f"Proposed: {sc['fix']}. Policy Engine evaluated L2 preconditions: PASS. Awaiting operator approval."
-            
-            # Persist proposal
-            conn = get_connection()
-            conn.execute("""
-                INSERT OR REPLACE INTO remediation_proposals 
-                (id, incident_id, action, target_service, risk_level, is_reversible, timeout_seconds, rollback_plan, expected_effect, policy_level, policy_allowed, policy_checks_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                f"PROP-{self.active_sim['id']}", self.active_sim["id"], sc["fix"], sc["svc"],
-                sc["risk_level"], 1, sc["timeout_seconds"], sc["rollback_plan"], sc["expected_effect"],
-                "L2", 1, json.dumps(policy_res["checks"])
-            ))
-            conn.execute("UPDATE incidents SET status = 'Awaiting approval', phase = 'await', active_agent = 'Remediation' WHERE id = ?", (self.active_sim["id"],))
-            conn.commit()
-            conn.close()
 
-            self.log("Policy Engine", "All 4 automatic preconditions verified. L2 reversible remediation requires human signoff.", "amb")
-            self.log("Remediation Agent", f"Action '{sc['fix']}' prepared. Target: {sc['svc_name']}. Rollback ready.", "cy")
-            self.audit("Policy Engine", "Preconditions PASSED (L2). Awaiting human operator approval.")
+            # Sync active_sim with graph state
+            self._sync_state_to_sim(final_state)
+
+            # Persist intermediate state (alerts, evidence, proposal) to DB
+            self._persist_intermediate_records(final_state)
 
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            print("Error in agent pipeline:", e)
+            print("Error in LangGraph workflow execution:", e)
 
-    async def _run_stage(self, stage_idx: int, result_str: str):
-        if not self.active_sim or self.active_sim["phase"] in ["stopped", "rejected"]:
+    def _sync_state_to_sim(self, state: IncidentState):
+        """Synchronizes LangGraph state to in-memory active_sim."""
+        if not self.active_sim:
             return
-        self.active_sim["st"][stage_idx] = "running"
-        self.active_sim["ts"][stage_idx] = self.get_elapsed_str()
-        agent_name = AGENTS[stage_idx]
-        task_desc = TASKS[stage_idx]
-        self.log(agent_name, task_desc, "cy")
+        self.active_sim["state"] = state
+        self.active_sim["phase"] = state.get("phase", "running")
+        self.active_sim["st"] = state.get("stage_statuses", self.active_sim["st"])
+        self.active_sim["res"] = state.get("stage_results", self.active_sim["res"])
+        self.active_sim["ts"] = state.get("stage_timestamps", self.active_sim["ts"])
+        self.active_sim["orders_at_risk"] = state.get("orders_at_risk", self.active_sim["orders_at_risk"])
+        self.active_sim["success_rate"] = state.get("checkout_success_pct", self.active_sim["success_rate"])
+        self.active_sim["policy"] = state.get("policy_evaluation")
 
-        # Update DB incident active_agent
-        conn = get_connection()
-        conn.execute("UPDATE incidents SET active_agent = ? WHERE id = ?", (agent_name, self.active_sim["id"]))
-        conn.commit()
-        conn.close()
+    def _persist_intermediate_records(self, state: IncidentState):
+        """Persists alerts, evidence, and remediation proposal to SQLite."""
+        inc_id = state["incident_id"]
+        try:
+            conn = get_connection()
+            # Alerts
+            for a in state.get("correlated_alerts", []):
+                alt_id = f"ALT-{int(time.time()*1000)%100000}-{a.get('service', 'svc')}"
+                conn.execute("""
+                    INSERT OR REPLACE INTO alerts (id, incident_id, service, name, severity, condition, fired_at, correlation_reason)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (alt_id, inc_id, a.get("service", "system"), a.get("alert_name", "Alert"), a.get("severity", "High"),
+                      f"Metric > threshold", state.get("detected_str", "Today"), state.get("correlation_reason", "Correlated by dependency")))
 
-        await asyncio.sleep(1.2)
+            # Evidence
+            for v in state.get("verified_claims", []):
+                ev_id = f"EV-{int(time.time()*1000)%100000}-{v.get('source_type', 'src')}"
+                conn.execute("""
+                    INSERT OR REPLACE INTO evidence (id, incident_id, type, source, claim, role, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (ev_id, inc_id, v.get("source_type", "metric"), v.get("service", "system"), v.get("claim_text", "Claim"), "Supports", "Today"))
 
-        if not self.active_sim or self.active_sim["phase"] in ["stopped", "rejected"]:
-            return
-        self.active_sim["st"][stage_idx] = "completed"
-        self.active_sim["res"][stage_idx] = result_str
-        self.log(agent_name, result_str, "grn")
+            # Remediation Proposal
+            prop = state.get("remediation_proposal")
+            if prop:
+                policy_eval = state.get("policy_evaluation", {})
+                conn.execute("""
+                    INSERT OR REPLACE INTO remediation_proposals 
+                    (id, incident_id, action, target_service, risk_level, is_reversible, timeout_seconds, rollback_plan, expected_effect, policy_level, policy_allowed, policy_checks_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    f"PROP-{inc_id}", inc_id, prop["action"], prop["target_service"],
+                    prop.get("risk_level", "Low"), 1 if prop.get("is_reversible", True) else 0,
+                    prop.get("timeout_seconds", 120), prop.get("rollback_plan", "rollback"),
+                    prop.get("expected_effect", "recover"), "L2",
+                    1 if state.get("policy_allowed") else 0,
+                    json.dumps(policy_eval.get("checks", {}))
+                ))
+
+            # Update incident status
+            db_status = "Awaiting approval" if state.get("phase") == "await" else "Investigating"
+            conn.execute("UPDATE incidents SET status = ?, phase = ?, active_agent = ? WHERE id = ?",
+                         (db_status, state.get("phase", "running"), state.get("active_agent", "Supervisor"), inc_id))
+
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("Failed to persist intermediate records:", e)
 
     async def approve_remediation(self, reviewer: str = "Operator (Human)") -> Dict[str, Any]:
+        """
+        Enforces human approval inside backend.
+        Evaluates policy engine with has_human_approval=True.
+        Resumes LangGraph execution across Executor, Recovery Verifier, and Comms.
+        """
         async with self.lock:
             if not self.active_sim or self.active_sim["phase"] != "await":
                 raise ValueError("No remediation is currently awaiting approval.")
 
-            sc = self.active_sim["sc"]
-            self.active_sim["phase"] = "executing"
-            self.audit(reviewer, f"Approved remediation: {sc['fix']}")
-            self.log(reviewer, f"Remediation approved: {sc['fix']}", "grn")
-            self.log("Remediation Agent", f"Executing simulated fix: {sc['fix']} on {sc['svc_name']}...", "cy")
+            state = self.active_sim.get("state") or incident_workflow.get_state(self.thread_config).values
+            prop = state.get("remediation_proposal", {})
 
-            # Persist approval
+            # Policy Engine evaluation with human approval
+            policy_res = PolicyEngine.evaluate_remediation_proposal(
+                action=prop.get("action", "unknown"),
+                target_service=prop.get("target_service", "system"),
+                is_reversible=prop.get("is_reversible", True),
+                evidence_coverage_pct=state.get("evidence_coverage_pct", 83.0),
+                has_human_approval=True
+            )
+
+            if not policy_res["allowed_for_execution"]:
+                reasons = policy_res.get("denial_reasons", ["Policy check failed"])
+                raise ValueError(f"Approval rejected by policy engine: {'; '.join(reasons)}")
+
+            self.active_sim["phase"] = "executing"
+
+            # Persist approval record in DB
             conn = get_connection()
             conn.execute("INSERT INTO approvals (incident_id, decision, decided_at, reviewer) VALUES (?, ?, ?, ?)",
                          (self.active_sim["id"], "Approved", datetime.now(timezone.utc).isoformat(), reviewer))
@@ -266,98 +291,105 @@ class SimulationOrchestrator:
             conn.commit()
             conn.close()
 
-            # Launch background execution & verification task
-            asyncio.create_task(self._execute_and_verify())
+            # Resume LangGraph workflow execution
+            asyncio.create_task(self._resume_workflow_execution(reviewer))
             return self.get_status()
 
-    async def _execute_and_verify(self):
+    async def _resume_workflow_execution(self, reviewer: str):
+        """Resumes LangGraph after human approval."""
         try:
-            await asyncio.sleep(1.5)
-            if not self.active_sim or self.active_sim["phase"] != "executing":
-                return
+            loop = asyncio.get_running_loop()
 
-            self.active_sim["phase"] = "verifying"
-            self.audit("Remediation Agent", "Simulated execution finished. Awaiting recovery verification.")
-            self.log("Remediation Agent", "Action command exited 0. Note: command success is NOT proof of recovery.", "cy")
-            self.log("Recovery Verification", "Sampling live health probes and comparing before/after metrics...", "amb")
+            # Update state with human approval
+            incident_workflow.update_state(
+                self.thread_config,
+                {
+                    "human_approved": True,
+                    "approval_reviewer": reviewer,
+                    "approval_remarks": "Approved by human operator"
+                }
+            )
 
+            # Invoke resumption
+            final_state = await loop.run_in_executor(
+                None,
+                lambda: incident_workflow.invoke(None, config=self.thread_config)
+            )
+
+            self._sync_state_to_sim(final_state)
+            self._persist_final_records(final_state)
+
+        except Exception as e:
+            print("Error resuming LangGraph execution:", e)
+
+    def _persist_final_records(self, state: IncidentState):
+        """Persists recovery verification, postmortem, knowledge item, and audit logs."""
+        inc_id = state["incident_id"]
+        try:
             conn = get_connection()
-            conn.execute("UPDATE incidents SET status = 'Verifying recovery', phase = 'verifying', active_agent = 'Evidence Verifier' WHERE id = ?", (self.active_sim["id"],))
-            conn.commit()
-            conn.close()
+            rec_ver = state.get("recovery_verification", {})
+            before_m = state.get("before_metrics", {})
+            after_m = state.get("after_metrics", {})
 
-            await asyncio.sleep(2.0)
-            if not self.active_sim or self.active_sim["phase"] != "verifying":
-                return
-
-            sc = self.active_sim["sc"]
-            verification = RecoveryVerifier.verify(sc["before_metrics"], sc["after_metrics"], sc["verification_checks"])
-
-            self.active_sim["phase"] = "resolved"
-            self.active_sim["st"][5] = "completed"
-            self.audit("Recovery Verification", "Recovery verified by 4 of 4 independent criteria.")
-            self.log("Recovery Verification", "Recovery verified: latency and error rates nominal.", "grn")
-
-            # Stage 6: Comms & Postmortem
-            self.active_sim["st"][6] = "running"
-            self.active_sim["ts"][6] = self.get_elapsed_str()
-            self.log("Comms Agent", "Dispatching simulated Slack incident channel notification and writing postmortem...", "cy")
-
-            postmortem_md = self._generate_postmortem(self.active_sim)
-
-            await asyncio.sleep(1.5)
-            self.active_sim["st"][6] = "completed"
-            self.active_sim["res"][6] = "Slack notification sent (simulated). Postmortem generated and archived in Knowledge Base."
-            self.log("Comms Agent", "Postmortem generated and incident stored in SQLite Knowledge Base.", "grn")
-
-            # Dispatch Slack / Discord webhook if configured in environment
-            webhook_url = os.getenv("SLACK_WEBHOOK_URL") or os.getenv("DISCORD_WEBHOOK_URL")
-            if webhook_url and "simulated" not in webhook_url:
-                try:
-                    import httpx
-                    async with httpx.AsyncClient(timeout=3.0) as client:
-                        await client.post(webhook_url, json={
-                            "text": f"🚨 [PagerPal Incident Resolved] {self.active_sim['id']}: {sc['name']} on {sc['svc_name']} has been remediated. Recovery verified across 4/4 empirical checks."
-                        })
-                except Exception as ex:
-                    print("Webhook notification failed gracefully:", ex)
-
-            # Persist postmortem, verification, knowledge base item, and update incident
-            conn = get_connection()
+            # 1. Verification results
             conn.execute("""
-                INSERT OR REPLACE INTO verification_results (incident_id, is_verified, checks_passed, total_checks, checks_json, before_metrics_json, after_metrics_json, verified_at)
+                INSERT OR REPLACE INTO verification_results 
+                (incident_id, is_verified, checks_passed, total_checks, checks_json, before_metrics_json, after_metrics_json, verified_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                self.active_sim["id"], 1, 4, 4,
-                json.dumps(verification["checks"]),
-                json.dumps(sc["before_metrics"]),
-                json.dumps(sc["after_metrics"]),
+                inc_id,
+                1 if state.get("is_recovery_verified") else 0,
+                rec_ver.get("checks_passed", 0),
+                rec_ver.get("total_checks", 4),
+                json.dumps(rec_ver.get("checks", [])),
+                json.dumps(before_m),
+                json.dumps(after_m),
                 datetime.now(timezone.utc).isoformat()
             ))
 
+            # 2. Postmortem
+            pm_md = state.get("postmortem_markdown", "")
             conn.execute("""
                 INSERT OR REPLACE INTO postmortems (incident_id, title, content_markdown, created_at)
                 VALUES (?, ?, ?, ?)
-            """, (self.active_sim["id"], f"{self.active_sim['id']} - {sc['name']}", postmortem_md, datetime.now(timezone.utc).isoformat()))
+            """, (inc_id, f"{inc_id} Postmortem", pm_md, datetime.now(timezone.utc).isoformat()))
 
-            conn.execute("""
-                INSERT OR REPLACE INTO knowledge_items (id, title, service, symptoms, root_cause, fix, approval_status, recovery_status, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (self.active_sim["id"], sc["name"], sc["svc_name"], sc["sym"], sc["cause"], sc["fix"], "Approved", "Verified", "Today " + datetime.now().strftime("%H:%M")))
+            # 3. Knowledge Base item (only if recovery verified)
+            if state.get("is_recovery_verified"):
+                prop = state.get("remediation_proposal", {})
+                conn.execute("""
+                    INSERT OR REPLACE INTO knowledge_items (id, title, service, symptoms, root_cause, fix, approval_status, recovery_status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    inc_id,
+                    f"Incident on {state.get('target_service', 'service')}",
+                    state.get("target_service", "service"),
+                    state.get("sim_run").alerts[0].alert_name if state.get("sim_run") and state.get("sim_run").alerts else "Telemetry degradation",
+                    state.get("top_root_cause", "Root cause identified"),
+                    prop.get("action", "Remediation executed"),
+                    "Approved",
+                    "Verified",
+                    "Today " + datetime.now().strftime("%H:%M")
+                ))
+
+            # 4. Incident final status
+            final_status = state.get("status", "Resolved")
+            final_phase = state.get("phase", "resolved")
+            resolved_at = datetime.now(timezone.utc).isoformat() if final_status == "Resolved" else None
 
             conn.execute("""
                 UPDATE incidents 
-                SET status = 'Resolved', phase = 'resolved', resolved_at = ?, active_agent = 'Comms'
+                SET status = ?, phase = ?, resolved_at = ?, active_agent = ?
                 WHERE id = ?
-            """, (datetime.now(timezone.utc).isoformat(), self.active_sim["id"]))
+            """, (final_status, final_phase, resolved_at, state.get("active_agent", "Comms"), inc_id))
 
             conn.commit()
             conn.close()
-
         except Exception as e:
-            print("Error in execution and verification:", e)
+            print("Failed to persist final records:", e)
 
     async def reject_remediation(self, reviewer: str = "Operator (Human)", reason: str = "Rejected by operator"):
+        """Rejects remediation, transitions to Escalated, logs human-rejected, and halts."""
         async with self.lock:
             if not self.active_sim or self.active_sim["phase"] != "await":
                 raise ValueError("No remediation is currently awaiting approval.")
@@ -365,7 +397,7 @@ class SimulationOrchestrator:
             self.active_sim["phase"] = "rejected"
             self.active_sim["st"][5] = "failed"
             self.active_sim["res"][5] = f"Rejected by operator ({reviewer}). Escalated to on-call engineering lead."
-            self.audit(reviewer, "Rejected remediation proposal", reason)
+            self.audit(reviewer, "human-rejected remediation proposal", reason)
             self.log(reviewer, f"Remediation rejected. Reason: {reason}", "red")
             self.log("Supervisor", "Escalating incident to Level 3 on-call engineer page.", "amb")
 
@@ -373,11 +405,26 @@ class SimulationOrchestrator:
             conn.execute("INSERT INTO approvals (incident_id, decision, decided_at, reviewer, remarks) VALUES (?, ?, ?, ?, ?)",
                          (self.active_sim["id"], "Rejected", datetime.now(timezone.utc).isoformat(), reviewer, reason))
             conn.execute("UPDATE incidents SET status = 'Escalated', phase = 'rejected', active_agent = 'Supervisor' WHERE id = ?", (self.active_sim["id"],))
+
+            # Store rejection postmortem
+            pm_md = f"""# Incident Postmortem: {self.active_sim['id']} (SIMULATION)
+
+**Status:** Escalated (Remediation Rejected by Operator)  
+**Reviewer:** {reviewer}  
+**Rejection Reason:** {reason}  
+
+Remediation was evaluated by Policy Engine but explicitly rejected by human operator.
+Incident has been escalated to on-call incident response team.
+"""
+            conn.execute("INSERT OR REPLACE INTO postmortems (incident_id, title, content_markdown, created_at) VALUES (?, ?, ?, ?)",
+                         (self.active_sim["id"], f"{self.active_sim['id']} - Rejected", pm_md, datetime.now(timezone.utc).isoformat()))
+
             conn.commit()
             conn.close()
             return self.get_status()
 
     async def emergency_stop(self, actor: str = "Operator (Human)"):
+        """Triggers emergency stop, runs rollback action on simulator, and logs human_override."""
         async with self.lock:
             if not self.active_sim:
                 raise ValueError("No active simulation to stop.")
@@ -386,65 +433,19 @@ class SimulationOrchestrator:
             if self.step_task and not self.step_task.done():
                 self.step_task.cancel()
 
-            self.audit(actor, "Emergency stop triggered! Remediation halted, rollback initiated.")
+            # Execute real simulator rollback
+            sim_data = {"status": "stopped"}
+            rb_res = remediation_executor.emergency_rollback(sim_data)
+
+            self.audit(actor, "human_override: Emergency stop triggered! Rollback executed", rb_res.get("rollback_action", ""))
             self.log(actor, "EMERGENCY STOP initiated. All active agent executions terminated.", "red")
-            self.log("Remediation Agent", "Simulated rollback triggered. Reverted to previous stable configuration.", "amb")
+            self.log("Remediation Agent", f"Rollback action '{rb_res.get('rollback_action')}' executed on {rb_res.get('target_service')}.", "amb")
 
             conn = get_connection()
             conn.execute("UPDATE incidents SET status = 'Stopped', phase = 'stopped', active_agent = 'Operator' WHERE id = ?", (self.active_sim["id"],))
             conn.commit()
             conn.close()
             return self.get_status()
-
-    def _generate_postmortem(self, sim: Dict[str, Any]) -> str:
-        sc = sim["sc"]
-        return f"""# Incident Postmortem: {sim['id']} (SIMULATION)
-
-**Title:** {sc['name']} on `{sc['svc_name']}`  
-**Date / Detected:** {sim['det']}  
-**Status:** Resolved (Simulated Recovery Verified)  
-**Severity:** {sc['sev']}  
-**Affected Service:** `{sc['svc_name']}`  
-
----
-
-## 1. Executive Summary
-During a simulated chaos injection, `{sc['svc_name']}` experienced `{sc['name']}` causing degradation across customer checkout flows. Checkout success rate dropped to **{sc['success_rate']}%**, putting approximately **{sc['orders_at_risk']} orders per minute** at risk. PagerPal's multi-agent workflow correlated the alerts, traced the root cause along the dependency path, obtained policy clearance, secured human approval, executed reversible remediation, and verified full system recovery.
-
-## 2. Impact Summary
-- **Business Impact:** ~{sc['orders_at_risk']} simulated orders/min at risk.
-- **Customer Experience:** Latency p95 increased from baseline to **{sc['before_metrics']['p95_latency']}**; error rate spiked to **{sc['before_metrics']['error_rate']}**.
-- **Blast Radius:** Correlated across `{sc['svc_name']}` and upstream user-facing `checkout-svc`.
-
-## 3. Root Cause Analysis
-- **Root Cause:** {sc['cause']}.
-- **Causal Propagation Path:** Checkout Service -> {sc['svc_name']} -> Orders Database.
-- **Evidence Verification:**
-  - Supporting: Deploy logs, metrics, trace spans, and commit context.
-  - Conflicting / Filtered: Database CPU nominal (ruled out datastore starvation).
-  - Dropped Claim: `{sc['dropped_claim']}` was flagged by Evidence Verifier as lacking telemetry and excluded.
-
-## 4. Remediation & Policy Engine Evaluation
-- **Proposed Action:** `{sc['fix']}`
-- **Policy Engine Decision:** Allowed (Level 2 Reversible Action).
-  - Allowlist Check: PASS
-  - Reversibility Check: PASS (Automated rollback plan: {sc['rollback_plan']})
-  - Simulation Boundary: PASS
-  - Diagnostic Coverage: 83% (Threshold >= 80%): PASS
-- **Human Approval:** Explicitly approved by operator before execution.
-
-## 5. Recovery Verification
-Recovery was verified independently across 4 out of 4 criteria:
-- **p95 Latency:** {sc['before_metrics']['p95_latency']} → **{sc['after_metrics']['p95_latency']}** (Normalized)
-- **Error Rate:** {sc['before_metrics']['error_rate']} → **{sc['after_metrics']['error_rate']}** (Below 1%)
-- **Resource Saturation:** {sc['before_metrics']['saturation']} → **{sc['after_metrics']['saturation']}** (Nominal)
-- **Synthetic Probes:** 3/3 consecutive health checks passed.
-
-## 6. Preventive Action Items
-1. Add database pool configuration validation checks to CI/CD pipeline pre-deploy gates.
-2. Establish dynamic alerting thresholds for connection pool queue delays exceeding 200ms.
-3. Configure automated canary rollout traffic shifting for payments service releases.
-"""
 
     def get_status(self) -> Dict[str, Any]:
         if not self.active_sim:
@@ -477,5 +478,6 @@ Recovery was verified independently across 4 out of 4 criteria:
             }
         }
 
-orchestrator = SimulationOrchestrator()
 
+# Global singleton
+orchestrator = SimulationOrchestrator()

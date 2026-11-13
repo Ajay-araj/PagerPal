@@ -30,3 +30,4 @@ dist/
 
 # SQLite runtime DB (can be recreated or initialized)
 *.db-journal
+

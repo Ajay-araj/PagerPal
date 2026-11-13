@@ -13,8 +13,8 @@ from backend.models import (
 from backend.scenarios import SCENARIOS
 from backend.graph import topology
 from backend.orchestrator import orchestrator, AGENTS
-from backend.policy_engine import PolicyEngine
-from backend.recovery_verifier import RecoveryVerifier
+from backend.policy.engine import PolicyEngine
+from backend.recovery.verify import RecoveryVerifier
 
 from contextlib import asynccontextmanager
 

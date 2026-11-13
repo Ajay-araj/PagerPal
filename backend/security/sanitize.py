@@ -65,3 +65,9 @@ class SecuritySanitizer:
         )
 
 sanitizer = SecuritySanitizer()
+
+
+def quarantine_untrusted_input(text: str) -> "SanitizedText":
+    """Module-level convenience wrapper for the global sanitizer."""
+    return sanitizer.sanitize_log_message(text)
+
