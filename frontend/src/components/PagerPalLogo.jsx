@@ -105,3 +105,4 @@ export function PagerPalBrandBadge({ height = 34, showTagline = true }) {
     </div>
   );
 }
+
