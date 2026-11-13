@@ -41,7 +41,7 @@ export function Settings({ onToast }) {
           Safety & Policy Engine Configuration
         </h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
             <div>
               <b style={{ color: '#FFFFFF' }}>Simulation Boundary Isolation</b>
               <div className="sub">All commands run strictly within simulated synthetic services; no real infrastructure is touched.</div>
@@ -49,7 +49,7 @@ export function Settings({ onToast }) {
             <span className="b grn">LOCKED (Enforced)</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
             <div>
               <b style={{ color: '#FFFFFF' }}>Human Approval Gate</b>
               <div className="sub">Level 2 reversible remediations require explicit operator approval before execution.</div>
@@ -57,7 +57,7 @@ export function Settings({ onToast }) {
             <span className="b grn">LOCKED (100% Required)</span>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(0, 217, 255, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
             <div>
               <b style={{ color: '#FFFFFF' }}>Independent Policy Engine</b>
               <div className="sub">Separate rule-based safety authority. The LLM is never the final permission decider.</div>

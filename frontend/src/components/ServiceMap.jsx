@@ -27,7 +27,7 @@ export function ServiceMap({ graphData, activeSim }) {
       </div>
 
       {/* Primary 3D Topology Canvas */}
-      <div className="pn" style={{ padding: '16px', background: 'rgba(5, 9, 20, 0.95)', overflow: 'hidden', marginBottom: '22px' }}>
+      <div className="pn" style={{ padding: '16px', background: 'var(--card)', overflow: 'hidden', marginBottom: '22px' }}>
         <Topology3D 
           graphData={graphData}
           activeSim={activeSim}
@@ -43,9 +43,9 @@ export function ServiceMap({ graphData, activeSim }) {
           className="pn" 
           style={{ 
             borderColor: 'var(--cyan)', 
-            background: 'linear-gradient(135deg, rgba(16, 29, 48, 0.96) 0%, rgba(11, 20, 36, 0.96) 100%)', 
+            background: 'var(--elevated)', 
             position: 'relative',
-            boxShadow: '0 0 30px rgba(0, 217, 255, 0.18)' 
+            boxShadow: '0 0 24px rgba(0, 217, 255, 0.15)' 
           }}
         >
           <button
@@ -71,21 +71,21 @@ export function ServiceMap({ graphData, activeSim }) {
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', fontSize: '13px' }}>
-            <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(0, 217, 255, 0.1)' }}>
+            <div style={{ background: 'var(--card)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <div style={{ color: 'var(--text2)', fontSize: '11px', textTransform: 'uppercase', marginBottom: '4px' }}>Causal Status</div>
               <b style={{ color: selectedNode.isRoot ? 'var(--red)' : selectedNode.isPath ? 'var(--amber)' : 'var(--green)' }}>
                 {selectedNode.isRoot ? 'Verified Fault Origin' : selectedNode.isPath ? 'Degraded In Propagation Chain' : 'Nominal Health'}
               </b>
             </div>
 
-            <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(0, 217, 255, 0.1)' }}>
+            <div style={{ background: 'var(--card)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <div style={{ color: 'var(--text2)', fontSize: '11px', textTransform: 'uppercase', marginBottom: '4px' }}>SLI Health Probes</div>
               <span style={{ color: 'var(--green)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                 <ShieldCheck size={14} /> Synthetic probes passing nominal thresholds
               </span>
             </div>
 
-            <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(0, 217, 255, 0.1)' }}>
+            <div style={{ background: 'var(--card)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
               <div style={{ color: 'var(--text2)', fontSize: '11px', textTransform: 'uppercase', marginBottom: '4px' }}>Isolation Boundary</div>
               <span className="mono" style={{ color: 'var(--cyan)' }}>
                 namespace: pagerpal-sim / isolated

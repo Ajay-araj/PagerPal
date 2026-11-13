@@ -102,10 +102,10 @@ export function ChaosModal({ onClose, onConfirmRun, isSimBusy, scenarios = [] })
           </div>
 
           <div style={{
-            background: 'rgba(5, 9, 20, 0.6)',
+            background: 'var(--elevated)',
             padding: '16px',
-            borderRadius: '10px',
-            border: '1px solid rgba(0, 217, 255, 0.12)',
+            borderRadius: '8px',
+            border: '1px solid var(--border)',
             margin: '16px 0',
             fontSize: '13.5px',
             lineHeight: 1.6
@@ -178,7 +178,7 @@ export function ChaosModal({ onClose, onConfirmRun, isSimBusy, scenarios = [] })
                   </span>
                 </div>
                 <p>{c.desc}</p>
-                <div style={{ fontSize: '12.5px', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(0, 217, 255, 0.08)' }}>
+                <div style={{ fontSize: '12.5px', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--border)' }}>
                   <div>
                     <span style={{ color: 'var(--text2)' }}>Target:</span>{' '}
                     <span className="mono" style={{ color: 'var(--cyan)' }}>{c.svc_name}</span>

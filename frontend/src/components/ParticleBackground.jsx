@@ -34,7 +34,7 @@ export function ParticleBackground() {
       vx: (Math.random() - 0.5) * 0.25,
       vy: -Math.random() * 0.35 - 0.1, // gently float upward
       opacity: Math.random() * 0.35 + 0.1,
-      color: Math.random() > 0.4 ? 'rgba(0, 217, 255, ' : 'rgba(50, 139, 255, '
+      color: Math.random() > 0.35 ? 'rgba(0, 217, 255, ' : 'rgba(214, 161, 94, '
     }));
 
     const render = () => {

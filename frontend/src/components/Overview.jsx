@@ -89,7 +89,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, ac
       </div>
 
       {/* Central 3D Service Topology Centerpiece */}
-      <div className="pn" style={{ padding: '16px', marginBottom: '24px', background: 'rgba(8, 15, 29, 0.92)' }}>
+      <div className="pn" style={{ padding: '16px', marginBottom: '24px', background: 'var(--card)' }}>
         <Topology3D 
           activeSim={activeSim}
           height="380px"
@@ -111,11 +111,11 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, ac
             <defs>
               <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#00D9FF" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#0B1424" stopOpacity="0.4" />
+                <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.4" />
               </linearGradient>
               <linearGradient id="barGradActive" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FFAE42" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#0B1424" stopOpacity="0.4" />
+                <stop offset="0%" stopColor="#FFAA36" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.4" />
               </linearGradient>
             </defs>
             {trendData.map((v, i) => {
@@ -157,7 +157,7 @@ export function Overview({ dashboard, onOpenChaos, onOpenIncident, isSimBusy, ac
                 </g>
               );
             })}
-            <line x1="16" x2="384" y1="120" y2="120" stroke="rgba(0, 217, 255, 0.12)" />
+            <line x1="16" x2="384" y1="120" y2="120" stroke="var(--border)" />
           </svg>
           <span className="sub" style={{ marginTop: '8px', display: 'block' }}>
             Daily incident aggregation. Today's figure updates in real time with active chaos injection cycles.

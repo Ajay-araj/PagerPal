@@ -37,7 +37,17 @@ PagerPal transforms incident management from manual playback into a multi-agent 
 | **Safety Engine** | Policy Engine | Non-LLM exact allowlist matching, L2 reversibility clearance |
 | **Recovery Engine** | Recovery Verifier | Empirical SLI validation (p95 latency, error rate, synthetic probes) |
 | **Persistence** | SQLite | Incidents, alerts, evidence, audit logs, and knowledge base |
-| **Frontend UI** | React 19 + Vite | **React console replaces Streamlit** for high-contrast dark ops UX |
+| **Frontend UI** | React 18 + Vite | Pure-black & charcoal command centre, Three.js 3D topology, Sora typography |
+| **Cloud Deployment**| Render + Vercel | Production-ready FastAPI web service (`render.yaml`) & SPA frontend (`vercel.json`) |
+
+---
+
+## Deployment to Render & Vercel
+
+Complete deployment configurations and step-by-step guides are documented in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+- **Backend (Render):** `render.yaml` pre-configured with Python 3, Uvicorn start command, health checks (`/health`), and optional persistent SQLite storage.
+- **Frontend (Vercel):** `frontend/vercel.json` pre-configured with Vite framework build settings and SPA URL rewrites.
 
 ---
 
@@ -72,7 +82,7 @@ Open **http://localhost:5173** in your browser. All API requests are proxied to 
 
 ## Running the Test Suite
 
-Run the full pytest suite (48 comprehensive tests across all stages):
+Run the full pytest suite (53 comprehensive tests across all stages):
 
 ```bash
 python -m pytest backend/tests/ -v

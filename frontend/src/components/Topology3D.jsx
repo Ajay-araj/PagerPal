@@ -48,7 +48,7 @@ export function Topology3D({
 
     // SCENE SETUP
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050914, 0.0018);
+    scene.fog = new THREE.FogExp2(0x050505, 0.0018);
 
     const width = container.clientWidth;
     const heightPx = container.clientHeight || 420;
@@ -77,7 +77,7 @@ export function Topology3D({
     dirLight1.position.set(200, 300, 200);
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x328bff, 0.8);
+    const dirLight2 = new THREE.DirectionalLight(0xd6a15e, 0.7);
     dirLight2.position.set(-200, -200, -100);
     scene.add(dirLight2);
 
@@ -85,10 +85,10 @@ export function Topology3D({
     const worldGroup = new THREE.Group();
     scene.add(worldGroup);
 
-    // Subtle 3D Grid Plane
-    const gridHelper = new THREE.GridHelper(520, 26, 0x00d9ff, 0x101d30);
+    // Subtle 3D Grid Plane (charcoal & subtle cyan)
+    const gridHelper = new THREE.GridHelper(520, 26, 0x00d9ff, 0x242424);
     gridHelper.position.y = -110;
-    gridHelper.material.opacity = 0.22;
+    gridHelper.material.opacity = 0.25;
     gridHelper.material.transparent = true;
     worldGroup.add(gridHelper);
 
@@ -417,10 +417,10 @@ export function Topology3D({
         pointerEvents: 'none'
       }}>
         <div style={{
-          background: 'rgba(8, 15, 29, 0.75)',
+          background: 'rgba(13, 13, 13, 0.88)',
           padding: '6px 14px',
           borderRadius: '8px',
-          border: '1px solid rgba(0, 217, 255, 0.2)',
+          border: '1px solid #242424',
           backdropFilter: 'blur(10px)',
           display: 'flex',
           alignItems: 'center',
@@ -433,7 +433,7 @@ export function Topology3D({
             background: hasIncident ? 'var(--red)' : 'var(--green)',
             boxShadow: `0 0 10px ${hasIncident ? 'var(--red)' : 'var(--green)'}`
           }} />
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#FFFFFF', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', letterSpacing: '0.04em' }}>
             {title.toUpperCase()}
           </span>
           <span className="mono" style={{ fontSize: '11px', color: 'var(--cyan)' }}>
@@ -447,7 +447,7 @@ export function Topology3D({
             className="btn" 
             onClick={() => controlsRef.current.zoomIn && controlsRef.current.zoomIn()}
             title="Zoom In"
-            style={{ padding: '6px', background: 'rgba(8, 15, 29, 0.85)' }}
+            style={{ padding: '6px', background: 'rgba(18, 18, 18, 0.9)', border: '1px solid #242424' }}
           >
             <ZoomIn size={14} />
           </button>
@@ -455,7 +455,7 @@ export function Topology3D({
             className="btn" 
             onClick={() => controlsRef.current.zoomOut && controlsRef.current.zoomOut()}
             title="Zoom Out"
-            style={{ padding: '6px', background: 'rgba(8, 15, 29, 0.85)' }}
+            style={{ padding: '6px', background: 'rgba(18, 18, 18, 0.9)', border: '1px solid #242424' }}
           >
             <ZoomOut size={14} />
           </button>
@@ -463,7 +463,7 @@ export function Topology3D({
             className="btn" 
             onClick={() => controlsRef.current.reset && controlsRef.current.reset()}
             title="Reset Camera & Orbit"
-            style={{ padding: '6px', background: 'rgba(8, 15, 29, 0.85)' }}
+            style={{ padding: '6px', background: 'rgba(18, 18, 18, 0.9)', border: '1px solid #242424' }}
           >
             <RotateCcw size={14} />
           </button>
@@ -476,11 +476,11 @@ export function Topology3D({
           position: 'absolute',
           left: `${Math.min(tooltip.x + 15, containerRef.current.clientWidth - 200)}px`,
           top: `${Math.max(tooltip.y - 65, 10)}px`,
-          background: 'rgba(11, 20, 36, 0.95)',
-          border: '1px solid var(--cyan)',
+          background: 'rgba(13, 13, 13, 0.95)',
+          border: '1px solid #242424',
           borderRadius: '8px',
           padding: '8px 12px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(0, 217, 255, 0.3)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 217, 255, 0.15)',
           pointerEvents: 'none',
           backdropFilter: 'blur(12px)',
           zIndex: 20,

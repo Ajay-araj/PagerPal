@@ -1,4 +1,5 @@
-const BASE_URL = '';
+const RAW_BASE = import.meta.env.VITE_API_BASE_URL || '';
+const BASE_URL = RAW_BASE.endsWith('/') ? RAW_BASE.slice(0, -1) : RAW_BASE;
 
 async function request(url, options = {}, timeoutMs = 6000) {
   const controller = new AbortController();

@@ -17,7 +17,7 @@ export function TopBar({ isSimBusy, onOpenChaos }) {
   return (
     <div className="top" id="top">
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <b style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '15px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>
+        <b style={{ fontFamily: "'Sora', sans-serif", fontSize: '15px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>
           PagerPal
         </b>
         <span className="sim">SIMULATION</span>
@@ -35,10 +35,10 @@ export function TopBar({ isSimBusy, onOpenChaos }) {
         style={{ 
           fontSize: '11px', 
           color: 'var(--text2)', 
-          background: 'rgba(16, 29, 48, 0.6)', 
+          background: 'var(--elevated)', 
           padding: '4px 10px', 
           borderRadius: '6px',
-          border: '1px solid rgba(0, 217, 255, 0.1)',
+          border: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
           gap: '5px'

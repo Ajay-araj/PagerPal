@@ -62,11 +62,11 @@ export function Navigation({ currentPage, onNavigate, isSimBusy }) {
         );
       })}
 
-      <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid rgba(0, 217, 255, 0.08)' }}>
+      <div style={{ marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
         <div style={{
-          background: 'rgba(16, 29, 48, 0.6)',
-          border: '1px solid rgba(0, 217, 255, 0.12)',
-          borderRadius: '10px',
+          background: 'var(--card)',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
           padding: '12px',
           fontSize: '11px',
           color: 'var(--text2)'

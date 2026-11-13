@@ -33,10 +33,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for React frontend
+# Enable CORS for React frontend (supports localhost & Vercel production URLs)
+allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000"
+]
+frontend_url_env = os.environ.get("FRONTEND_URL")
+if frontend_url_env:
+    for u in frontend_url_env.split(","):
+        u = u.strip()
+        if u and u not in allowed_origins:
+            allowed_origins.append(u)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"] if not frontend_url_env else allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app" if frontend_url_env else None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

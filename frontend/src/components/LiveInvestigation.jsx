@@ -33,7 +33,7 @@ export function LiveInvestigation({ simData, onOpenChaos, onOpenApproval }) {
             <p>Collaborative multi-agent reasoning, evidence verification, and safety-gated remediation.</p>
           </div>
         </div>
-        <div className="pn empty" style={{ padding: '60px 20px', background: 'rgba(11, 20, 36, 0.7)' }}>
+        <div className="pn empty" style={{ padding: '60px 20px', background: 'var(--card)' }}>
           <AlertOctagon size={48} style={{ color: 'var(--text2)', margin: '0 auto 16px', opacity: 0.6 }} />
           <b style={{ fontSize: '18px', display: 'block', color: '#FFFFFF', marginBottom: '8px' }}>
             No Active Incident In Flight
@@ -137,8 +137,8 @@ export function LiveInvestigation({ simData, onOpenChaos, onOpenApproval }) {
           className="pn" 
           style={{ 
             borderColor: 'var(--amber)', 
-            background: 'linear-gradient(135deg, rgba(35, 27, 14, 0.95) 0%, rgba(20, 15, 8, 0.95) 100%)',
-            boxShadow: '0 0 30px rgba(255, 174, 66, 0.25)',
+            background: 'var(--elevated)',
+            boxShadow: '0 0 20px rgba(255, 170, 54, 0.2)',
             marginBottom: '22px'
           }}
         >
@@ -192,7 +192,7 @@ export function LiveInvestigation({ simData, onOpenChaos, onOpenApproval }) {
             Causal Root Cause & Confidence Meter
           </h2>
           
-          <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.1)', marginBottom: '16px' }}>
+          <div style={{ background: 'var(--elevated)', padding: '14px 16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '16px' }}>
             <div style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text2)', fontWeight: 600 }}>Identified Root Cause</div>
             <div style={{ fontSize: '15px', color: '#FFFFFF', fontWeight: 600, margin: '6px 0' }}>
               {sc.cause || 'Under investigation by Causal RCA agent'}
@@ -229,7 +229,7 @@ export function LiveInvestigation({ simData, onOpenChaos, onOpenApproval }) {
             </div>
           </div>
 
-          <div style={{ marginTop: '16px', padding: '10px 14px', background: 'rgba(0, 217, 255, 0.04)', borderRadius: '8px', border: '1px solid rgba(0, 217, 255, 0.12)' }}>
+          <div style={{ marginTop: '16px', padding: '10px 14px', background: 'var(--card)', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: '12px', color: 'var(--text2)' }}>
               <b>Evidence Verifier:</b> {sc.dropped_claim || 'Unverified or hallucinated assertions eliminated by algorithmic claim checks.'}
             </span>

@@ -106,7 +106,7 @@ export function IncidentDetail({
           <div className="two">
             <div>
               <h2>Business Impact & Blast Radius</h2>
-              <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.1)', marginBottom: '18px' }}>
+              <div style={{ background: 'var(--elevated)', padding: '14px 16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '18px' }}>
                 <p style={{ margin: 0, lineHeight: 1.6 }}>
                   <b>{inc.severity} Severity Incident.</b> Synthetic checkout success rate dropped to{' '}
                   <b style={{ color: 'var(--red)' }}>{inc.checkout_success_pct || 81.2}%</b> during the active fault window, placing{' '}
@@ -142,7 +142,7 @@ export function IncidentDetail({
 
             <div>
               <h2>Causal Root-Cause Hypothesis</h2>
-              <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '14px 16px', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.1)', marginBottom: '18px' }}>
+              <div style={{ background: 'var(--elevated)', padding: '14px 16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '18px' }}>
                 <p style={{ fontSize: '15px', color: '#FFFFFF', fontWeight: 600, margin: '0 0 8px' }}>
                   {sc.cause || 'Under investigation by Causal RCA agent'}
                 </p>
@@ -219,7 +219,7 @@ export function IncidentDetail({
               </tbody>
             </table>
           </div>
-          <div style={{ marginTop: '18px', padding: '12px 16px', background: 'rgba(5, 9, 20, 0.6)', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.12)' }}>
+          <div style={{ marginTop: '18px', padding: '12px 16px', background: 'var(--elevated)', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: '13px', color: 'var(--text2)', lineHeight: 1.5, display: 'block' }}>
               <b style={{ color: 'var(--amber)' }}>Eliminated / Dropped Claims:</b> {sc.dropped_claim || 'Unverified assertions were rejected by Evidence Verifier.'}
             </span>
@@ -233,7 +233,7 @@ export function IncidentDetail({
           <div className="two">
             <div>
               <h2>Proposed Remediation Action</h2>
-              <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '16px', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.12)', marginBottom: '18px' }}>
+              <div style={{ background: 'var(--elevated)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '18px' }}>
                 <p style={{ fontSize: '18px', fontWeight: 700, color: '#FFFFFF', margin: '0 0 10px' }}>
                   {sc.fix}
                 </p>
@@ -343,7 +343,7 @@ export function IncidentDetail({
               <h2 style={{ margin: '26px 0 12px' }}>Independent Verification Health Probes</h2>
               <ul style={{ paddingLeft: '0', listStyle: 'none' }}>
                 {sc.verification_checks.map((chk, i) => (
-                  <li key={i} style={{ padding: '8px 12px', background: 'rgba(5, 9, 20, 0.4)', borderRadius: '6px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <li key={i} style={{ padding: '8px 12px', background: 'var(--elevated)', border: '1px solid var(--border-subtle)', borderRadius: '6px', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                     {isResolved ? (
                       <span className="b grn" style={{ padding: '2px 8px', fontSize: '11px' }}> PASS</span>
                     ) : (
@@ -400,7 +400,7 @@ export function IncidentDetail({
             <h2 style={{ fontSize: '20px', color: '#FFFFFF', marginBottom: '12px' }}>
               Authorize Remediation Execution?
             </h2>
-            <div style={{ background: 'rgba(5, 9, 20, 0.6)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(0, 217, 255, 0.12)', marginBottom: '18px', fontSize: '13.5px' }}>
+            <div style={{ background: 'var(--elevated)', padding: '14px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '18px', fontSize: '13.5px' }}>
               <p style={{ margin: '0 0 8px' }}>
                 Action: <b style={{ color: 'var(--cyan)' }}>{sc.fix}</b>
               </p>

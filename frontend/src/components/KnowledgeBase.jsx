@@ -27,7 +27,7 @@ export function KnowledgeBase({ items }) {
         </div>
       </div>
 
-      <div className="note" style={{ borderColor: 'rgba(0, 217, 255, 0.3)', background: 'rgba(10, 29, 46, 0.75)', color: '#bce4ff' }}>
+      <div className="note" style={{ borderColor: 'var(--border)', background: 'var(--elevated)', color: 'var(--text)' }}>
         <AlertCircle size={16} style={{ flexShrink: 0, color: 'var(--cyan)' }} />
         <span>
           <b>HARD SAFETY RULE 8:</b> Past incidents serve strictly as reference suggestions. PagerPal never automatically reapplies a past fix without fresh empirical evidence verification and independent Policy Engine evaluation.
