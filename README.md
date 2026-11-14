@@ -388,10 +388,10 @@ Built by Team PagerPal
 Developed for AgentX at SYNERGY, Syedric College.
 
 Team Member
-Ajiras Abhishek
-Ajay Raj A M
+Abhishek
+Ajaya Raj A N
 Rishitha R
-Rithu
+Ritu
 
 ---
 
