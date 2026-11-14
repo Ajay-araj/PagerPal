@@ -1,4 +1,4 @@
-⚡ PAGERPAL_
+⚡ PAGERPAL
 
 Autonomous Multi-Agent Incident Response Console
 
